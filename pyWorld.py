@@ -10,8 +10,8 @@ WORLD_HEIGHT = 65
 SCREEN_WIDTH = 65
 SCREEN_HEIGHT = 65
 
-INITIAL_CIVS = 7
-CIV_MAX_SITES = 30
+INITIAL_CIVS = 1
+CIV_MAX_SITES = 10
 MAX_SITE_POP = 20000
 
 ###################################################################################### - Classes - ######################################################################################
@@ -40,10 +40,11 @@ class Race:
 
 class CivSite:
 
-      def __init__(self,x,y,category):
+      def __init__(self,x,y,category,suitable):
             self.x = x
             self.y = y
             self.category = category
+            self.suitable = suitable
 
       Population = 0
 
@@ -57,6 +58,7 @@ class Civ:
             self.Color = Color
 
       Sites = []
+      SuitableSites = []
 
 ##################################################################################### - Functions - #####################################################################################
 
@@ -74,7 +76,7 @@ def ClearConsole():
 
 def PointDistRound(pt1x, pt1y, pt2x, pt2y):
 
-      distance = math.sqrt((pt1x - pt1y) * (pt1x - pt1y) + (pt2x-pt2y) *(pt2x-pt2y));
+      distance = abs(pt2x - pt1x) + abs(pt2y - pt1y);
 
       distance = round(distance)
 
@@ -276,7 +278,7 @@ def MasterWorldGen():    #------------------------------------------------------
       print '- Main Hills -'
 
       for i in range(200):
-            libtcod.heightmap_add_hill(hm, randint(WORLD_WIDTH/10,WORLD_WIDTH- WORLD_WIDTH/10), randint(WORLD_HEIGHT/10,WORLD_HEIGHT- WORLD_HEIGHT/10), randint(2,4), randint(3,7))
+            libtcod.heightmap_add_hill(hm, randint(WORLD_WIDTH/10,WORLD_WIDTH- WORLD_WIDTH/10), randint(WORLD_HEIGHT/10,WORLD_HEIGHT- WORLD_HEIGHT/10), randint(2,4), randint(6,10))
       print '- Small Hills -'
 
       libtcod.heightmap_normalize(hm, 0.0, 1.0)
@@ -442,17 +444,23 @@ def CivGen(Races): #------------------------------------------------------------
 def SetupCivs(Civs, World, Chars, Colors):
 
       for x in range(INITIAL_CIVS):
+
+            for i in range(WORLD_WIDTH):
+                  for j in range (WORLD_HEIGHT):
+                        if World[i][j].biomeID == Civs[x].Race.PrefBiome:
+                              Civs[x].SuitableSites.append(CivSite(i,j,"",1))
             
-            X = randint(0, WORLD_WIDTH-1)
-            Y = randint(0, WORLD_HEIGHT-1)
+            rand = randint(0,len(Civs[x].SuitableSites)-1)
 
-            while World[X][Y].biomeID != Civs[x].Race.PrefBiome or World[X][Y].isCiv == True:
+            X = Civ.SuitableSites[rand].x
+            Y = Civ.SuitableSites[rand].y
 
-                  X = randint(0, WORLD_WIDTH-1)
-                  Y = randint(0, WORLD_HEIGHT-1)
+            Civs[x].SuitableSites[rand].suitable = 0
 
             World[X][Y].isCiv = True
-            Civs[x].Sites.append ( CivSite(X,Y,"Village") )
+
+            del Civs[x].Sites[:]
+            Civs[x].Sites.append ( CivSite(X,Y,"Village",0) )
             Civs[x].Sites[0].Population = 300
             Civs[x].Sites[0].Prosperity = Civs[x].Sites[0].Population * 0.25
 
@@ -465,7 +473,31 @@ def SetupCivs(Civs, World, Chars, Colors):
 
       return
 
-def ProcessCivs(World,Civs): #-------------------------------------------------------------------- * PROCESS CIVS (UN-USED) * ----------------------------------------------------------------------------------
+##################################################################################### - PROCESS CIVS - ##################################################################################
+
+def NewSite(Civ, Origin, World,Chars,Colors):
+
+      rand = randint(0,len(Civ.SuitableSites)-1)
+
+      while PointDistRound(Origin.x, Origin.y, Civ.SuitableSites[rand].x, Civ.SuitableSites[rand].y) > 10:
+            rand = randint(0,len(Civ.SuitableSites)-1)
+
+      X = Civ.SuitableSites[rand].x
+      Y = Civ.SuitableSites[rand].y
+
+      Civ.SuitableSites[rand].suitable = 0
+
+      World[X][Y].isCiv = True
+      Civs[x].Sites.append ( CivSite(X,Y,"Village",0) )
+      Civs[x].Sites[len(Civs[x].Sites)-1].Population = 300
+      Civs[x].Sites[len(Civs[x].Sites)-1].Prosperity = Civs[x].Sites[0].Population * 0.25
+
+      Chars[X][Y] = 31
+      Colors[X][Y] = Civs[x].Color
+
+      return
+
+def ProcessCivs(World,Civs,Chars,Colors):
 
       for x in range(INITIAL_CIVS):
 
@@ -475,12 +507,17 @@ def ProcessCivs(World,Civs): #--------------------------------------------------
             #GAINS
             for y in range(len(Civs[x].Sites)):
 
+                  print Civs[0].Sites[y].Population
+
                   #Population
                   NewPop = Civs[x].Sites[y].Population * Civs[x].Race.ReproductionSpeed/5000
                   Civs[x].Sites[y].Population += NewPop
 
                   if Civs[x].Sites[y].Population > MaxPop:
-                        Civs[x].Sites[y].Population = MaxPop                  
+                        Civs[x].Sites[y].Population = MaxPop - 10000
+                        #TESTING
+                        print "new site"
+                        NewSite(Civs[x],Civs[x].Sites[y],World,Chars,Colors)
 
       return
 
@@ -652,11 +689,11 @@ while not libtcod.console_is_window_closed():
       #Simulation
       while isRunning == True:
 
-            ProcessCivs(World,Civs)            
+            ProcessCivs(World,Civs,Chars,Colors)            
             
             #DEBUG Print Mounth
             i+=1
-            print 'Mounth:',i
+            print 'Month: ',i
 
             #End Simulation
             libtcod.console_check_for_keypress(True)
@@ -667,6 +704,7 @@ while not libtcod.console_is_window_closed():
                   time.sleep(1)
 
             #Flush Console
+            BiomeMap(Chars,Colors)
             libtcod.console_flush()
       
       key = libtcod.console_check_for_keypress(True)
