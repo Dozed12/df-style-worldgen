@@ -455,8 +455,6 @@ def SetupCivs(Civs, World, Chars, Colors):
         X = Civ.SuitableSites[rand].x
         Y = Civ.SuitableSites[rand].y
 
-        Civs[x].SuitableSites[rand].suitable = 0
-
         World[X][Y].isCiv = True
 
         del Civs[x].Sites[:]
@@ -479,21 +477,19 @@ def NewSite(Civ, Origin, World,Chars,Colors):
 
     rand = randint(0,len(Civ.SuitableSites)-1)
 
-    while PointDistRound(Origin.x, Origin.y, Civ.SuitableSites[rand].x, Civ.SuitableSites[rand].y) > 10:
+    while PointDistRound(Origin.x, Origin.y, Civ.SuitableSites[rand].x, Civ.SuitableSites[rand].y) > 10 or World[Civ.SuitableSites[rand].x][Civ.SuitableSites[rand].y].isCiv:
         rand = randint(0,len(Civ.SuitableSites)-1)
 
     X = Civ.SuitableSites[rand].x
     Y = Civ.SuitableSites[rand].y
 
-    Civ.SuitableSites[rand].suitable = 0
-
     World[X][Y].isCiv = True
-    Civs[x].Sites.append ( CivSite(X,Y,"Village",0) )
-    Civs[x].Sites[len(Civs[x].Sites)-1].Population = 300
-    Civs[x].Sites[len(Civs[x].Sites)-1].Prosperity = Civs[x].Sites[0].Population * 0.25
+    Civ.Sites.append ( CivSite(X,Y,"Village",0) )
+    Civ.Sites[len(Civ.Sites)-1].Population = 300
+    Civ.Sites[len(Civ.Sites)-1].Prosperity = Civ.Sites[len(Civ.Sites)-1].Population * 0.25
 
     Chars[X][Y] = 31
-    Colors[X][Y] = Civs[x].Color
+    Colors[X][Y] = Civ.Color
 
     return
 
@@ -507,8 +503,6 @@ def ProcessCivs(World,Civs,Chars,Colors):
         #GAINS
         for y in range(len(Civs[x].Sites)):
 
-            print Civs[0].Sites[y].Population
-
             #Population
             NewPop = Civs[x].Sites[y].Population * Civs[x].Race.ReproductionSpeed/5000
             Civs[x].Sites[y].Population += NewPop
@@ -518,6 +512,8 @@ def ProcessCivs(World,Civs,Chars,Colors):
                 #TESTING
                 print "new site"
                 NewSite(Civs[x],Civs[x].Sites[y],World,Chars,Colors)
+
+            print Civs[x].Sites[y].Population
 
     return
 
