@@ -40,11 +40,12 @@ class Race:
 
 class CivSite:
 
-    def __init__(self,x,y,category,suitable):
+    def __init__(self,x,y,category,suitable,popcap):
         self.x = x
         self.y = y
         self.category = category
         self.suitable = suitable
+        self.popcap = popcap
 
     Population = 0
 
@@ -448,7 +449,7 @@ def SetupCivs(Civs, World, Chars, Colors):
         for i in range(WORLD_WIDTH):
             for j in range (WORLD_HEIGHT):
                 if World[i][j].biomeID == Civs[x].Race.PrefBiome:
-                    Civs[x].SuitableSites.append(CivSite(i,j,"",1))
+                    Civs[x].SuitableSites.append(CivSite(i,j,"",1,0))
             
         rand = randint(0,len(Civs[x].SuitableSites)-1)
 
@@ -458,9 +459,9 @@ def SetupCivs(Civs, World, Chars, Colors):
         World[X][Y].isCiv = True
 
         del Civs[x].Sites[:]
-        Civs[x].Sites.append ( CivSite(X,Y,"Village",0) )
-        Civs[x].Sites[0].Population = 300
-        Civs[x].Sites[0].Prosperity = Civs[x].Sites[0].Population * 0.25
+        PopCap = 3 * Civs[x].Race.ReproductionSpeed + randint (1,100) #Random Site Max Pop
+        Civs[x].Sites.append ( CivSite(X,Y,"Village",0,PopCap) )
+        Civs[x].Sites[0].Population = 20
 
         Chars[X][Y] = 31
         Colors[X][Y] = Civs[x].Color
@@ -484,8 +485,9 @@ def NewSite(Civ, Origin, World,Chars,Colors):
     Y = Civ.SuitableSites[rand].y
 
     World[X][Y].isCiv = True
-    Civ.Sites.append ( CivSite(X,Y,"Village",0) )
-    Civ.Sites[len(Civ.Sites)-1].Population = 300
+    PopCap = 3 * Civ.Race.ReproductionSpeed + randint (1,100) #Random Site Max Pop
+    Civ.Sites.append ( CivSite(X,Y,"Village",0,PopCap) )
+    Civ.Sites[len(Civ.Sites)-1].Population = 20
     Civ.Sites[len(Civ.Sites)-1].Prosperity = Civ.Sites[len(Civ.Sites)-1].Population * 0.25
 
     Chars[X][Y] = 31
@@ -493,24 +495,24 @@ def NewSite(Civ, Origin, World,Chars,Colors):
 
     return
 
-def ProcessCivs(World,Civs,Chars,Colors):
+def ProcessCivs(World,Civs,Chars,Colors,Month):
 
     for x in range(INITIAL_CIVS):
-
-        #Max Site Population for Civ
-        MaxPop = MAX_SITE_POP * Civs[x].Race.ReproductionSpeed / 100
 
         #GAINS
         for y in range(len(Civs[x].Sites)):
 
             #Population
-            NewPop = Civs[x].Sites[y].Population * Civs[x].Race.ReproductionSpeed/5000
+            NewPop = Civs[x].Sites[y].Population * Civs[x].Race.ReproductionSpeed/1500
+
+            if Civs[x].Sites[y].Population > Civs[x].Sites[y].popcap / 2:
+                NewPop /= 4                                
+            
             Civs[x].Sites[y].Population += NewPop
 
-            if Civs[x].Sites[y].Population > MaxPop:
-                Civs[x].Sites[y].Population = MaxPop - 10000
+            if Civs[x].Sites[y].Population > Civs[x].Sites[y].popcap:
                 #TESTING
-                print "new site"
+                Civs[x].Sites[y].Population = Civs[x].Sites[y].popcap / 2                
                 NewSite(Civs[x],Civs[x].Sites[y],World,Chars,Colors)
 
             print Civs[x].Sites[y].Population
@@ -677,7 +679,8 @@ Civs = CivGen(Races)
 #Setup Civs
 SetupCivs(Civs, World, Chars, Colors)
 
-i=0
+#Month 0
+Month=0
 
 #Select Map Mode
 while not libtcod.console_is_window_closed():
@@ -685,11 +688,11 @@ while not libtcod.console_is_window_closed():
     #Simulation
     while isRunning == True:
 
-        ProcessCivs(World,Civs,Chars,Colors)            
+        ProcessCivs(World,Civs,Chars,Colors,Month)            
             
         #DEBUG Print Mounth
-        i+=1
-        print 'Month: ',i
+        Month+=1
+        print 'Month: ',Month
 
         #End Simulation
         libtcod.console_check_for_keypress(True)
