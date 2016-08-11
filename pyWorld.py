@@ -83,20 +83,20 @@ def PointDistRound(pt1x, pt1y, pt2x, pt2y):
 
     return distance
 
-def LowestNeighbour(X,Y,hm):   #Diagonals are commented for rivers
+def LowestNeighbour(X,Y,World):   #Diagonals are commented for rivers
 
-    minval = 5
+    minval = 1
 
     x = 0
     y = 0
 
-    if libtcod.heightmap_get_value(hm, X + 1, Y) < minval and X + 1 < WORLD_WIDTH:
-        minval = libtcod.heightmap_get_value(hm, X + 1, Y)
+    if World[X + 1][Y].height < minval and X + 1 < WORLD_WIDTH:
+        minval = World[X + 1][Y].height
         x = X + 1
         y = Y
 
-    if libtcod.heightmap_get_value(hm, X, Y + 1) < minval and Y + 1 < WORLD_HEIGHT:
-        minval = libtcod.heightmap_get_value(hm, X, Y + 1)
+    if World[X][Y + 1].height < minval and Y + 1 < WORLD_HEIGHT:
+        minval = World[X][Y + 1].height
         x = X
         y = Y + 1
 
@@ -110,13 +110,13 @@ def LowestNeighbour(X,Y,hm):   #Diagonals are commented for rivers
         #x = X - 1
         #y = Y - 1
 
-    if libtcod.heightmap_get_value(hm, X - 1, Y) < minval and X - 1 > 0:
-        minval = libtcod.heightmap_get_value(hm, X - 1, Y)
+    if World[X - 1][Y].height < minval and X - 1 > 0:
+        minval = World[X - 1][Y].height
         x = X - 1
         y = Y
 
-    if libtcod.heightmap_get_value(hm, X, Y - 1) < minval and Y - 1 > 0:
-        minval = libtcod.heightmap_get_value(hm, X, Y - 1)
+    if World[X][Y - 1].height < minval and Y - 1 > 0:
+        minval = World[X][Y - 1].height
         x = X
         y = Y - 1
 
@@ -236,32 +236,35 @@ def Percipitaion(preciphm):
 
     return
 
-def RiverGen(hm, World):
+def RiverGen(World):
 
     X = randint(0,WORLD_WIDTH-1)                       
     Y = randint(0,WORLD_HEIGHT-1)
 
-    while libtcod.heightmap_get_value(hm, X, Y) <= 0.8:
+    while World[X][Y].height < 0.8:
         X = randint(0,WORLD_WIDTH-1)                       
         Y = randint(0,WORLD_HEIGHT-1)
 
-    XCoor = [0 for x in range(50)]
-    YCoor = [0 for x in range(50)]
+    XCoor = []
+    YCoor = []
       
-    XCoor[0] = X
-    YCoor[0] = Y
+    XCoor.append(X)
+    YCoor.append(Y)
 
-    for x in range(1,50):
+    for x in range(1,20):
 
-        XCoor[x],YCoor[x] = LowestNeighbour(X,Y,hm)          
-            
-        X = XCoor[x]
-        Y = YCoor[x]
+        X,Y = LowestNeighbour(X,Y,World) 
 
-        if libtcod.heightmap_get_value(hm, X, Y) < 0.2:
+        if World[X][Y].hasRiver == True or World[X+1][Y].hasRiver or World[X-1][Y].hasRiver or World[X][Y+1].hasRiver or World[X][Y-1].hasRiver or World[X][Y].height < 0.2:
             break
 
-    for x in range(50):
+        XCoor.append(X)
+        YCoor.append(Y)
+
+    if len(XCoor) <= 2:
+        return
+
+    for x in range(len(XCoor)):
         World[XCoor[x]][YCoor[x]].hasRiver = True
 
     return
@@ -375,14 +378,14 @@ def MasterWorldGen():    #------------------------------------------------------
             if World[x][y].height <= 0.2:
                 World[x][y].biomeID = 0
             if World[x][y].height <= 0.1:
-                World[x][y].biomeID = 0                  
+                World[x][y].biomeID = 0
 
     print '- BiomeIDs Atributed -'
       
     #River Gen
       
-    for x in range(2):
-        RiverGen(hm, World)
+    for x in range(5):
+        RiverGen(World)
     print '- River Gen -'
 
     #Free Heightmaps
@@ -641,7 +644,7 @@ def NormalMap(World):  # -------------------------------------------------------
             Colors[x][y] = ColorDictionary(World[x][y].biomeID)
             if World[x][y].hasRiver == True:
                 Chars[x][y] = 'o'
-                Colors[x][y] = libtcod.dark_cyan
+                Colors[x][y] = libtcod.light_blue
 
     return Chars, Colors
 
