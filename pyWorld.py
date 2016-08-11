@@ -18,12 +18,13 @@ MAX_SITE_POP = 20000
 
 class Tile:
 
-    def __init__(self, height,temp,precip, biome):
+    def __init__(self, height,temp,precip,drainage, biome):
         self.temp = temp
         self.height = height
         self.precip = precip
+        self.drainage = drainage
         self.biome = biome
-
+        
     hasRiver = False
     isCiv = False
 
@@ -320,17 +321,29 @@ def MasterWorldGen():    #------------------------------------------------------
     preciphm = libtcod.heightmap_new(WORLD_WIDTH, WORLD_HEIGHT)
     Percipitaion(preciphm)
     libtcod.heightmap_normalize(preciphm, 0.0, 0.8)
-    print '- Percipitaion Calculation -'  
+    print '- Percipitaion Calculation -'
+
+    #Drainage
+
+    drainhm = libtcod.heightmap_new(WORLD_WIDTH, WORLD_HEIGHT)
+    drain = libtcod.noise_new(2,libtcod.NOISE_DEFAULT_HURST, libtcod.NOISE_DEFAULT_LACUNARITY)
+    libtcod.heightmap_add_fbm(drainhm,drain ,2, 2, 0, 0, 32, 1, 1)
+    libtcod.heightmap_normalize(drainhm, 0.0, 0.8)
+    print '- Drainage Calculation -'
       
     # VOLCANISM - RARE AT SEA FOR NEW ISLANDS (?) RARE AT MOUNTAINS > 0.9 (?) RARE AT TECTONIC BORDERS (?)
+
+    elapsed_time = time.time() - starttime
+    print ' * World Gen DONE *    in: ',elapsed_time,' seconds'
 
     #Initialize Tiles with Map values
     World = [[0 for y in range(WORLD_HEIGHT)] for x in range(WORLD_WIDTH)] #100x100 array
     for x in xrange(WORLD_WIDTH):
         for y in xrange(WORLD_HEIGHT):
                 World[x][y] = Tile(libtcod.heightmap_get_value(hm, x, y),
-                                    libtcod.heightmap_get_value(temp, x, y),
-                                    libtcod.heightmap_get_value(preciphm, x, y),
+                                   libtcod.heightmap_get_value(temp, x, y),
+                                   libtcod.heightmap_get_value(preciphm, x, y),
+                                   libtcod.heightmap_get_value(drainhm, x, y),
                                     0)      
 
     print '- Tiles Initialized -'
@@ -393,8 +406,7 @@ def MasterWorldGen():    #------------------------------------------------------
     libtcod.heightmap_delete(temp)
     libtcod.heightmap_delete(noisehm)                       
 
-    elapsed_time = time.time() - starttime
-    print ' * World Gen DONE *    in: ',elapsed_time,' seconds'
+    print ' * Biomes/Rivers Sorted *'
 
     return World
 
@@ -582,12 +594,21 @@ def TempGradMap(World):  # -----------------------------------------------------
     libtcod.console_flush()
     return
 
-def PrecipGradMap(World):  # ------------------------------------------------------------ Print Map (Surface Temperature Gradient) white -> cold red -> warm --------------------------------
+def PrecipGradMap(World):  # ------------------------------------------------------------ Print Map (Precipitation Gradient) white -> low blue -> high --------------------------------
     for x in xrange(WORLD_WIDTH):
         for y in xrange(WORLD_HEIGHT):
             tempv = World[x][y].precip
             tempcolor = libtcod.color_lerp ( libtcod.white, libtcod.light_blue,tempv)
             libtcod.console_put_char_ex( 0, x, y + SCREEN_HEIGHT/2 - WORLD_HEIGHT/2, '\333' , tempcolor, libtcod.black)
+    libtcod.console_flush()
+    return
+
+def DrainageGradMap(World):  # ------------------------------------------------------------ Print Map (Drainage Gradient) white -> low green -> high --------------------------------
+    for x in xrange(WORLD_WIDTH):
+        for y in xrange(WORLD_HEIGHT):
+            drainv = World[x][y].drainage
+            draincolor = libtcod.color_lerp ( libtcod.white, libtcod.darker_green,drainv)
+            libtcod.console_put_char_ex( 0, x, y + SCREEN_HEIGHT/2 - WORLD_HEIGHT/2, '\333' , draincolor, libtcod.black)
     libtcod.console_flush()
     return
 
@@ -726,6 +747,8 @@ while not libtcod.console_is_window_closed():
             TempGradMap(World)
         elif key.c == ord('p'):
             PrecipGradMap(World)
+        elif key.c == ord('d'):
+            DrainageGradMap(World)
         elif key.c == ord('b'):
             BiomeMap(Chars,Colors)
         elif key.c == ord('r'):
