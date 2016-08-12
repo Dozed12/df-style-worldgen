@@ -29,6 +29,7 @@ class Tile:
     isCiv = False
 
     biomeID = 0
+    prosperity = 0
 
 class Race:
       
@@ -218,16 +219,16 @@ def Temperature(temp,hm):
 
     return
 
-def Percipitaion(preciphm):
+def Percipitaion(preciphm, temphm):
 
     libtcod.heightmap_add(preciphm, 2)
 
     for x in xrange(WORLD_WIDTH):
         for y in xrange(WORLD_HEIGHT):
-                if y > WORLD_HEIGHT/2 - WORLD_HEIGHT/10 and y < WORLD_HEIGHT/2 + WORLD_HEIGHT/10:
-                    val = y
-                    val = abs(y - WORLD_HEIGHT/2)
-                    libtcod.heightmap_set_value(preciphm, x, y, val/4)
+            temp = libtcod.heightmap_get_value(temphm, x, y)
+            if temp > 0.7:
+                val = libtcod.heightmap_get_value(preciphm,x,y)
+                libtcod.heightmap_set_value(preciphm, x, y, val - temp)
                         
     precip = libtcod.noise_new(2,libtcod.NOISE_DEFAULT_HURST, libtcod.NOISE_DEFAULT_LACUNARITY)
 
@@ -267,6 +268,14 @@ def RiverGen(World):
 
     for x in range(len(XCoor)):
         World[XCoor[x]][YCoor[x]].hasRiver = True
+
+    return
+
+def Prosperity(World):
+
+    for x in xrange(WORLD_WIDTH):
+        for y in xrange(WORLD_HEIGHT):
+            World[x][y].prosperity = (0.8 - abs(World[x][y].precip - 0.6) + 0.8 - abs(World[x][y].temp - 0.5) + World[x][y].drainage)/3
 
     return
 
@@ -319,7 +328,7 @@ def MasterWorldGen():    #------------------------------------------------------
     #Precipitation
 
     preciphm = libtcod.heightmap_new(WORLD_WIDTH, WORLD_HEIGHT)
-    Percipitaion(preciphm)
+    Percipitaion(preciphm, temp)
     libtcod.heightmap_normalize(preciphm, 0.0, 0.8)
     print '- Percipitaion Calculation -'
 
@@ -348,7 +357,12 @@ def MasterWorldGen():    #------------------------------------------------------
 
     print '- Tiles Initialized -'
 
-    # - Biome info to Tiles -
+    #Prosperity
+
+    Prosperity(World)
+    print '- Prosperity Calculation -'
+
+    #Biome info to Tile
 
     for x in xrange(WORLD_WIDTH):
         for y in xrange(WORLD_HEIGHT):
@@ -603,12 +617,21 @@ def PrecipGradMap(World):  # ---------------------------------------------------
     libtcod.console_flush()
     return
 
-def DrainageGradMap(World):  # ------------------------------------------------------------ Print Map (Drainage Gradient) white -> low green -> high --------------------------------
+def DrainageGradMap(World):  # ------------------------------------------------------------ Print Map (Drainage Gradient) brown -> low white -> high --------------------------------
     for x in xrange(WORLD_WIDTH):
         for y in xrange(WORLD_HEIGHT):
             drainv = World[x][y].drainage
-            draincolor = libtcod.color_lerp ( libtcod.white, libtcod.darker_green,drainv)
+            draincolor = libtcod.color_lerp ( libtcod.darkest_orange, libtcod.white,drainv)
             libtcod.console_put_char_ex( 0, x, y + SCREEN_HEIGHT/2 - WORLD_HEIGHT/2, '\333' , draincolor, libtcod.black)
+    libtcod.console_flush()
+    return
+
+def ProsperityGradMap(World):  # ------------------------------------------------------------ Print Map (Prosperity Gradient) white -> low green -> high --------------------------------
+    for x in xrange(WORLD_WIDTH):
+        for y in xrange(WORLD_HEIGHT):
+            prosperitynv = World[x][y].prosperity
+            prosperitycolor = libtcod.color_lerp ( libtcod.white, libtcod.darker_green,prosperitynv)
+            libtcod.console_put_char_ex( 0, x, y + SCREEN_HEIGHT/2 - WORLD_HEIGHT/2, '\333' , prosperitycolor, libtcod.black)
     libtcod.console_flush()
     return
 
@@ -749,6 +772,8 @@ while not libtcod.console_is_window_closed():
             PrecipGradMap(World)
         elif key.c == ord('d'):
             DrainageGradMap(World)
+        elif key.c == ord('f'):
+            ProsperityGradMap(World)
         elif key.c == ord('b'):
             BiomeMap(Chars,Colors)
         elif key.c == ord('r'):
