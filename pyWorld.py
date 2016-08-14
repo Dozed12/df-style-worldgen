@@ -132,6 +132,8 @@ def FlagGenerator(Color):
             elif C == '"':
                 Flag[x][y] = OverColor2            
 
+    BackFile.close()
+    OverlayFile.close()
 
     return Flag
 
