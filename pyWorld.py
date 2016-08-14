@@ -53,12 +53,13 @@ class CivSite:
 
 class Civ:
 
-    def __init__(self,Race,Name,Agression,Type,Color):
+    def __init__(self,Race,Name,Agression,Type,Color,Flag):
         self.Name = Name
         self.Race = Race
         self.Agression = Agression
         self.Type = Type
         self.Color = Color
+        self.Flag = Flag
 
     Sites = []
     SuitableSites = []
@@ -84,6 +85,55 @@ def PointDistRound(pt1x, pt1y, pt2x, pt2y):
     distance = round(distance)
 
     return distance
+
+def FlagGenerator(Color):
+
+    Flag = [[0 for a in range(4)] for b in range(12)]
+
+    BackColor1 = Color
+    BackColor2 = libtcod.Color(randint(0,255),randint(0,255),randint(0,255))
+
+    OverColor1 = libtcod.Color(randint(0,255),randint(0,255),randint(0,255))
+    OverColor2 = libtcod.Color(randint(0,255),randint(0,255),randint(0,255))
+
+    BackFile = open("Background.txt",'r')
+    OverlayFile = open("Overlay.txt",'r')
+
+    BTypes = (sum(1 for line in open('Background.txt')) + 1) / 5
+    OTypes = (sum(1 for line in open('Overlay.txt')) + 1) / 5
+
+    Back = randint(1, BTypes)
+    Overlay = randint(1, OTypes)
+
+    for a in range(53*(Back-1)):
+        C = BackFile.read(1)
+
+    for a in range(53*(Overlay-1)):
+        C = OverlayFile.read(1)
+
+    for y in range(4):
+        for x in range(12):
+        
+            C = BackFile.read(1)
+            while C == '\n':
+                C = BackFile.read(1)
+
+            if C == '#':
+                Flag[x][y] = BackColor1
+            elif C == '"':
+                Flag[x][y] = BackColor2
+
+            C = OverlayFile.read(1)
+            while C == '\n':
+                C = OverlayFile.read(1)
+
+            if C == '#':
+                Flag[x][y] = OverColor1
+            elif C == '"':
+                Flag[x][y] = OverColor2            
+
+
+    return Flag
 
 def LowestNeighbour(X,Y,World):   #Diagonals are commented for rivers
 
@@ -463,9 +513,11 @@ def CivGen(Races): #------------------------------------------------------------
         Type = randint(1,1)
 
         Color = libtcod.Color(randint(0,255),randint(0,255),randint(0,255))
+
+        Flag = FlagGenerator(Color)
       
         #Initialize Civ
-        Civs[x] = Civ(Race,Name,Agression,Type,Color)
+        Civs[x] = Civ(Race,Name,Agression,Type,Color,Flag)
 
     print '- Civs Generated -'
 
@@ -488,8 +540,15 @@ def SetupCivs(Civs, World, Chars, Colors):
         World[X][Y].isCiv = True
 
         del Civs[x].Sites[:]
-        PopCap = 3 * Civs[x].Race.ReproductionSpeed + randint (1,100) #Random Site Max Pop
+        
+        FinalProsperity = World[X][Y].prosperity * 150
+        if World[X][Y].hasRiver == True:
+            FinalProsperity = FinalProsperity * 1.5
+        PopCap = 3 * Civs[x].Race.ReproductionSpeed + FinalProsperity
+        PopCap = round(PopCap)
+        
         Civs[x].Sites.append ( CivSite(X,Y,"Village",0,PopCap) )
+        
         Civs[x].Sites[0].Population = 20
 
         Chars[X][Y] = 31
@@ -514,10 +573,16 @@ def NewSite(Civ, Origin, World,Chars,Colors):
     Y = Civ.SuitableSites[rand].y
 
     World[X][Y].isCiv = True
-    PopCap = 3 * Civ.Race.ReproductionSpeed + randint (1,100) #Random Site Max Pop
+
+    FinalProsperity = World[X][Y].prosperity * 150
+    if World[X][Y].hasRiver == True:
+        FinalProsperity = FinalProsperity * 1.5    
+    PopCap = 3 * Civ.Race.ReproductionSpeed + FinalProsperity
+    PopCap = round(PopCap)
+    
     Civ.Sites.append ( CivSite(X,Y,"Village",0,PopCap) )
+    
     Civ.Sites[len(Civ.Sites)-1].Population = 20
-    Civ.Sites[len(Civ.Sites)-1].Prosperity = Civ.Sites[len(Civ.Sites)-1].Population * 0.25
 
     Chars[X][Y] = 31
     Colors[X][Y] = Civ.Color
@@ -541,7 +606,7 @@ def ProcessCivs(World,Civs,Chars,Colors,Month):
 
             if Civs[x].Sites[y].Population > Civs[x].Sites[y].popcap:
                 #TESTING
-                Civs[x].Sites[y].Population = Civs[x].Sites[y].popcap / 2                
+                Civs[x].Sites[y].Population = int(round(Civs[x].Sites[y].popcap / 2))
                 NewSite(Civs[x],Civs[x].Sites[y],World,Chars,Colors)
 
             print Civs[x].Sites[y].Population
