@@ -33,12 +33,13 @@ class Tile:
 
 class Race:
       
-    def __init__(self,Name,PrefBiome,Strenght,Size,ReproductionSpeed):
+    def __init__(self,Name,PrefBiome,Strenght,Size,ReproductionSpeed,Aggressiveness):
         self.Name = Name
         self.PrefBiome = PrefBiome
         self.Strenght = Strenght
         self.Size = Size
         self.ReproductionSpeed = ReproductionSpeed
+        self.Aggressiveness = Aggressiveness
 
 class CivSite:
 
@@ -63,6 +64,14 @@ class Civ:
 
     Sites = []
     SuitableSites = []
+
+class GovernmentType:
+
+    def __init__(self,Name,Aggressiveness,Militarizantion,TechBonus):
+        self.Name = Name
+        self.Aggressiveness = Aggressiveness
+        self.Militarizantion = Militarizantion
+        self.TechBonus = TechBonus
 
 ##################################################################################### - Functions - #####################################################################################
 
@@ -480,16 +489,23 @@ def ReadRaces():
 
     RacesFile = 'Races.txt'
 
-    NRaces = sum(1 for line in open('Races.txt'))
+    NLines = sum(1 for line in open('Races.txt'))
+
+    NRaces = NLines / 6
 
     f = open(RacesFile)
 
     Races = [0 for x in range(NRaces)]
 
-    for x in range(NRaces):
-        data = f.readline().split(',')
-        Races[x] = Race(data[0],int(data[1]),int(data[2]),int(data[3]),int(data[4]))      
-
+    for x in range(NRaces):                       #Reads info between ']' and '\n'
+        Info = [0 for a in range(6)]
+        for y in range(6):
+            data = f.readline()
+            start = data.index("]") + 1
+            end = data.index("\n",start)
+            Info[y] = data[start:end]
+        Races[x] = Race(Info[0],int(Info[1]),int(Info[2]),int(Info[3]),int(Info[4]),int(Info[5]))
+        
     f.close()
 
     print '- Races Read -'
