@@ -10,7 +10,9 @@ WORLD_HEIGHT = 65
 SCREEN_WIDTH = 65
 SCREEN_HEIGHT = 65
 
-INITIAL_CIVS = 1
+CIVILIZED_CIVS = 1
+TRIBAL_CIVS = 1
+
 CIV_MAX_SITES = 10
 MAX_SITE_POP = 20000
 
@@ -33,13 +35,14 @@ class Tile:
 
 class Race:
       
-    def __init__(self,Name,PrefBiome,Strenght,Size,ReproductionSpeed,Aggressiveness):
+    def __init__(self,Name,PrefBiome,Strenght,Size,ReproductionSpeed,Aggressiveness,Form):
         self.Name = Name
         self.PrefBiome = PrefBiome
         self.Strenght = Strenght
         self.Size = Size
         self.ReproductionSpeed = ReproductionSpeed
         self.Aggressiveness = Aggressiveness
+        self.Form = Form
 
 class CivSite:
 
@@ -54,21 +57,28 @@ class CivSite:
 
 class Civ:
 
-    def __init__(self,Race,Name,Agression,Type,Color,Flag):
+    def __init__(self,Race,Name,Government,Color,Flag,Aggression):
         self.Name = Name
         self.Race = Race
-        self.Agression = Agression
-        self.Type = Type
+        self.Government = Government
         self.Color = Color
         self.Flag = Flag
+        self.Aggression = Race.Aggressiveness + Government.Aggressiveness
+
+    def PrintInfo(self):
+        print self.Name
+        print self.Race.Name
+        print self.Government.Name
+        print 'Aggression:',self.Aggression    
 
     Sites = []
     SuitableSites = []
 
 class GovernmentType:
 
-    def __init__(self,Name,Aggressiveness,Militarizantion,TechBonus):
+    def __init__(self,Name,Description,Aggressiveness,Militarizantion,TechBonus):
         self.Name = Name
+        self.Description = Description
         self.Aggressiveness = Aggressiveness
         self.Militarizantion = Militarizantion
         self.TechBonus = TechBonus
@@ -491,51 +501,99 @@ def ReadRaces():
 
     NLines = sum(1 for line in open('Races.txt'))
 
-    NRaces = NLines / 6
+    NRaces = NLines / 7
 
     f = open(RacesFile)
 
     Races = [0 for x in range(NRaces)]
 
     for x in range(NRaces):                       #Reads info between ']' and '\n'
-        Info = [0 for a in range(6)]
-        for y in range(6):
+        Info = [0 for a in range(7)]
+        for y in range(7):
             data = f.readline()
             start = data.index("]") + 1
             end = data.index("\n",start)
             Info[y] = data[start:end]
-        Races[x] = Race(Info[0],int(Info[1]),int(Info[2]),int(Info[3]),int(Info[4]),int(Info[5]))
+        Races[x] = Race(Info[0],int(Info[1]),int(Info[2]),int(Info[3]),int(Info[4]),int(Info[5]),Info[6])
         
     f.close()
 
     print '- Races Read -'
 
-    return NRaces, Races
+    return Races
 
-def CivGen(Races): #-------------------------------------------------------------------- * CIV GEN * ----------------------------------------------------------------------------------
+def ReadGovern():
 
-    Civs = [0 for x in range(INITIAL_CIVS)]
+    GovernFile = 'CivilizedGovernment.txt'
 
-    for x in range(INITIAL_CIVS):
+    NLines = sum(1 for line in open('CivilizedGovernment.txt'))
+
+    NGovern = NLines / 5
+
+    f = open(GovernFile)
+
+    Governs = [0 for x in range(NGovern)]
+
+    for x in range(NGovern):                       #Reads info between ']' and '\n'
+        Info = [0 for a in range(5)]
+        for y in range(5):
+            data = f.readline()
+            start = data.index("]") + 1
+            end = data.index("\n",start)
+            Info[y] = data[start:end]
+        Governs[x] = GovernmentType(Info[0],Info[1],int(Info[2]),int(Info[3]),int(Info[4]))
+        
+    f.close()
+
+    print '- Government Types Read -'
+
+    return Governs
+
+def CivGen(Races,Govern): #-------------------------------------------------------------------- * CIV GEN * ----------------------------------------------------------------------------------
+
+    Civs = [0 for x in range(CIVILIZED_CIVS+TRIBAL_CIVS)]
+
+    for x in range(CIVILIZED_CIVS):
 
         libtcod.namegen_parse('namegen/jice_fantasy.cfg')
         Name = libtcod.namegen_generate('Fantasy male')
         libtcod.namegen_destroy ()
 
-        Name += "Empire"
+        Name += " Civilization"
 
-        Race = Races[randint(0,NRaces-1)]
-
-        Agression = randint(1,4)
-
-        Type = randint(1,1)
+        Race = Races[randint(0,len(Races)-1)]
+        while Race.Form != "civilized":
+            Race = Races[randint(0,len(Races)-1)]
+        
+        Government = Govern[randint(0,len(Govern)-1)]
 
         Color = libtcod.Color(randint(0,255),randint(0,255),randint(0,255))
 
         Flag = FlagGenerator(Color)
       
         #Initialize Civ
-        Civs[x] = Civ(Race,Name,Agression,Type,Color,Flag)
+        Civs[x] = Civ(Race,Name,Government,Color,Flag,0)
+
+    for x in range(TRIBAL_CIVS):
+
+        libtcod.namegen_parse('namegen/jice_fantasy.cfg')
+        Name = libtcod.namegen_generate('Fantasy male')
+        libtcod.namegen_destroy ()
+
+        Name += " Tribe"
+
+        Race = Races[randint(0,len(Races)-1)]
+        while Race.Form != "tribal":
+            Race = Races[randint(0,len(Races)-1)]
+        
+        Government = GovernmentType("Tribal","*PLACE HOLDER*",2,50,0)
+
+        Color = libtcod.Color(randint(0,255),randint(0,255),randint(0,255))
+
+        Flag = FlagGenerator(Color)
+      
+        #Initialize Civ
+        Civs[x+CIVILIZED_CIVS] = Civ(Race,Name,Government,Color,Flag,0)
 
     print '- Civs Generated -'
 
@@ -543,7 +601,9 @@ def CivGen(Races): #------------------------------------------------------------
 
 def SetupCivs(Civs, World, Chars, Colors):
 
-    for x in range(INITIAL_CIVS):
+    for x in range(CIVILIZED_CIVS+TRIBAL_CIVS):
+
+        Civs[x].PrintInfo()
 
         for i in range(WORLD_WIDTH):
             for j in range (WORLD_HEIGHT):
@@ -609,7 +669,7 @@ def NewSite(Civ, Origin, World,Chars,Colors):
 
 def ProcessCivs(World,Civs,Chars,Colors,Month):
 
-    for x in range(INITIAL_CIVS):
+    for x in range(CIVILIZED_CIVS+TRIBAL_CIVS):
 
         #GAINS
         for y in range(len(Civs[x].Sites)):
@@ -800,11 +860,14 @@ World = MasterWorldGen()
 Chars, Colors = NormalMap(World)
 
 #Read Races
-NRaces, Races = ReadRaces()
+Races = ReadRaces()
+
+#Read Governments
+Govern = ReadGovern()
 
 #Civ Gen
-Civs = [0 for x in range(INITIAL_CIVS)]
-Civs = CivGen(Races)
+Civs = [0 for x in range(CIVILIZED_CIVS)]
+Civs = CivGen(Races,Govern)
 
 #Setup Civs
 SetupCivs(Civs, World, Chars, Colors)
