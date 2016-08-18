@@ -4,6 +4,11 @@ import time
 from random import randint
 from random import uniform
 
+import cProfile
+
+pr = cProfile.Profile()
+pr.enable()
+
 WORLD_WIDTH = 65
 WORLD_HEIGHT = 65
 
@@ -311,12 +316,18 @@ def Percipitaion(preciphm, temphm):
 
 def RiverGen(World):
 
-    X = randint(0,WORLD_WIDTH-1)                       
+    X = randint(0,WORLD_WIDTH-1)
     Y = randint(0,WORLD_HEIGHT-1)
 
+    tries = 0
+
     while World[X][Y].height < 0.8:
-        X = randint(0,WORLD_WIDTH-1)                       
+        tries += 1
+        X = randint(0,WORLD_WIDTH-1)
         Y = randint(0,WORLD_HEIGHT-1)
+
+        if tries > 2000:
+            return
 
     XCoor = []
     YCoor = []
@@ -326,10 +337,13 @@ def RiverGen(World):
 
     for x in range(1,20):
 
-        X,Y = LowestNeighbour(X,Y,World) 
+        X,Y = LowestNeighbour(X,Y,World)
 
-        if World[X][Y].hasRiver == True or World[X+1][Y].hasRiver or World[X-1][Y].hasRiver or World[X][Y+1].hasRiver or World[X][Y-1].hasRiver or World[X][Y].height < 0.2:
-            break
+        try:
+            if World[X][Y].hasRiver == True or World[X+1][Y].hasRiver or World[X-1][Y].hasRiver or World[X][Y+1].hasRiver or World[X][Y-1].hasRiver or World[X][Y].height < 0.2:
+                break
+        except IndexError:
+            return
 
         XCoor.append(X)
         YCoor.append(Y)
@@ -370,7 +384,7 @@ def MasterWorldGen():    #------------------------------------------------------
 
     noisehm = libtcod.heightmap_new(WORLD_WIDTH, WORLD_HEIGHT)
     noise2d = libtcod.noise_new(2,libtcod.NOISE_DEFAULT_HURST, libtcod.NOISE_DEFAULT_LACUNARITY)
-    libtcod.heightmap_add_fbm(noisehm, noise2d,4, 4, 0, 0, 64, 1, 1)
+    libtcod.heightmap_add_fbm(noisehm, noise2d,4, 4, 0, 0, 32, 1, 1)
     libtcod.heightmap_normalize(noisehm, 0.0, 1.0)
     libtcod.heightmap_multiply_hm(hm, noisehm, hm)
     print '- Apply Simplex -'
@@ -598,6 +612,13 @@ def CivGen(Races,Govern): #-----------------------------------------------------
     print '- Civs Generated -'
 
     return Civs
+
+def ClearCivs(Civs):
+
+    for x in range(len(Civs)-1):
+        del Civs[x].SuitableSites[:]
+
+    return
 
 def SetupCivs(Civs, World, Chars, Colors):
 
@@ -846,7 +867,7 @@ Palette = [libtcod.Color(20,150,30), #Green
            ]
 
 libtcod.sys_set_fps(30)
-libtcod.console_set_fullscreen(False)
+#libtcod.console_set_fullscreen(False)
 
 ################################################################################# - Main Cycle / Input - ##################################################################################
 
@@ -866,7 +887,7 @@ Races = ReadRaces()
 Govern = ReadGovern()
 
 #Civ Gen
-Civs = [0 for x in range(CIVILIZED_CIVS)]
+Civs = [0 for x in range(CIVILIZED_CIVS+TRIBAL_CIVS)]
 Civs = CivGen(Races,Govern)
 
 #Setup Civs
@@ -899,13 +920,19 @@ while not libtcod.console_is_window_closed():
         BiomeMap(Chars,Colors)
         libtcod.console_flush()
       
-    key = libtcod.console_check_for_keypress(True)
+    key = libtcod.console_wait_for_keypress(True)
 
     #Start Simulation
     if libtcod.console_is_key_pressed(libtcod.KEY_SPACE):
         isRunning = True
         print "*RUNNING*"
-        time.sleep(1)     
+        time.sleep(1)
+
+    if libtcod.console_is_key_pressed(libtcod.KEY_ESCAPE):
+        isRunning = False
+        
+        pr.disable()
+        pr.print_stats(sort='time')        
       
     if key.vk == libtcod.KEY_CHAR:
         if key.c == ord('t'):
@@ -925,11 +952,13 @@ while not libtcod.console_is_window_closed():
         elif key.c == ord('r'):
             print "\n" * 100
             World = MasterWorldGen()
-            NRaces, Races = ReadRaces()
-            Civs = CivGen(Races)
+            Races = ReadRaces()
+            Govern = ReadGovern()
+            ClearCivs(Civs)
+            Civs = CivGen(Races,Govern)
             Chars, Colors = NormalMap(World)
-            SetupCivs(Civs, World, Chars, Colors)            
-            ClearConsole()
+            SetupCivs(Civs, World, Chars, Colors)
+            BiomeMap(Chars,Colors)
 
 
 
