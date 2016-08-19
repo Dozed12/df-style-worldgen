@@ -15,8 +15,8 @@ WORLD_HEIGHT = 65
 SCREEN_WIDTH = 65
 SCREEN_HEIGHT = 65
 
-CIVILIZED_CIVS = 1
-TRIBAL_CIVS = 1
+CIVILIZED_CIVS = 2
+TRIBAL_CIVS = 0
 
 CIV_MAX_SITES = 10
 MAX_SITE_POP = 20000
@@ -74,7 +74,7 @@ class Civ:
         print self.Name
         print self.Race.Name
         print self.Government.Name
-        print 'Aggression:',self.Aggression    
+        print 'Aggression:',self.Aggression
 
     Sites = []
     SuitableSites = []
@@ -565,7 +565,7 @@ def ReadGovern():
 
 def CivGen(Races,Govern): #-------------------------------------------------------------------- * CIV GEN * ----------------------------------------------------------------------------------
 
-    Civs = [0 for x in range(CIVILIZED_CIVS+TRIBAL_CIVS)]
+    Civs = []
 
     for x in range(CIVILIZED_CIVS):
 
@@ -586,9 +586,9 @@ def CivGen(Races,Govern): #-----------------------------------------------------
         Flag = FlagGenerator(Color)
       
         #Initialize Civ
-        Civs[x] = Civ(Race,Name,Government,Color,Flag,0)
+        Civs.append(Civ(Race,Name,Government,Color,Flag,0))
 
-    for x in range(TRIBAL_CIVS):
+    for a in range(TRIBAL_CIVS):
 
         libtcod.namegen_parse('namegen/jice_fantasy.cfg')
         Name = libtcod.namegen_generate('Fantasy male')
@@ -607,7 +607,7 @@ def CivGen(Races,Govern): #-----------------------------------------------------
         Flag = FlagGenerator(Color)
       
         #Initialize Civ
-        Civs[x+CIVILIZED_CIVS] = Civ(Race,Name,Government,Color,Flag,0)
+        Civs.append(Civ(Race,Name,Government,Color,Flag,0))
 
     print '- Civs Generated -'
 
@@ -622,9 +622,11 @@ def ClearCivs(Civs):
 
 def SetupCivs(Civs, World, Chars, Colors):
 
-    for x in range(CIVILIZED_CIVS+TRIBAL_CIVS):
+    for x in range(len(Civs)):
 
-        Civs[x].PrintInfo()
+        Civs[x].Sites = []
+
+        #Civs[x].PrintInfo()
 
         for i in range(WORLD_WIDTH):
             for j in range (WORLD_HEIGHT):
@@ -632,13 +634,14 @@ def SetupCivs(Civs, World, Chars, Colors):
                     Civs[x].SuitableSites.append(CivSite(i,j,"",1,0))
             
         rand = randint(0,len(Civs[x].SuitableSites)-1)
+        while World[Civs[x].SuitableSites[rand].x][Civs[x].SuitableSites[rand].y].isCiv == True:
+            del Civs[x].SuitableSites[rand]
+            rand = randint(0,len(Civs[x].SuitableSites)-1)
 
-        X = Civ.SuitableSites[rand].x
-        Y = Civ.SuitableSites[rand].y
+        X = Civs[x].SuitableSites[rand].x
+        Y = Civs[x].SuitableSites[rand].y
 
         World[X][Y].isCiv = True
-
-        del Civs[x].Sites[:]
         
         FinalProsperity = World[X][Y].prosperity * 150
         if World[X][Y].hasRiver == True:
@@ -646,18 +649,23 @@ def SetupCivs(Civs, World, Chars, Colors):
         PopCap = 3 * Civs[x].Race.ReproductionSpeed + FinalProsperity
         PopCap = round(PopCap)
         
-        Civs[x].Sites.append ( CivSite(X,Y,"Village",0,PopCap) )
+        Civs[x].Sites.append (CivSite(X,Y,"Village",0,PopCap))
         
         Civs[x].Sites[0].Population = 20
 
         Chars[X][Y] = 31
         Colors[X][Y] = Civs[x].Color
 
+        print Civs[x].Sites[0].x,Civs[x].Sites[0].y
+
     print '- Civs Setup -'
 
     print ' * Civ Gen DONE *'
 
-    return
+    for x in range(len(Civs)):
+        print Civs[x].Sites[0].x,Civs[x].Sites[0].y
+
+    return Civs
 
 ##################################################################################### - PROCESS CIVS - ##################################################################################
 
@@ -686,7 +694,7 @@ def NewSite(Civ, Origin, World,Chars,Colors):
     Chars[X][Y] = 31
     Colors[X][Y] = Civ.Color
 
-    return
+    return Civ
 
 def ProcessCivs(World,Civs,Chars,Colors,Month):
 
@@ -704,11 +712,11 @@ def ProcessCivs(World,Civs,Chars,Colors,Month):
             Civs[x].Sites[y].Population += NewPop
 
             if Civs[x].Sites[y].Population > Civs[x].Sites[y].popcap:
-                #TESTING
                 Civs[x].Sites[y].Population = int(round(Civs[x].Sites[y].popcap / 2))
-                NewSite(Civs[x],Civs[x].Sites[y],World,Chars,Colors)
+                if len(Civs[x].Sites) < CIV_MAX_SITES:
+                    Civs[x] = NewSite(Civs[x],Civs[x].Sites[y],World,Chars,Colors)
 
-            print Civs[x].Sites[y].Population
+            print Civs[x].Name,Civs[x].Sites[y].x,Civs[x].Sites[y].y
 
     return
 
@@ -891,7 +899,7 @@ Civs = [0 for x in range(CIVILIZED_CIVS+TRIBAL_CIVS)]
 Civs = CivGen(Races,Govern)
 
 #Setup Civs
-SetupCivs(Civs, World, Chars, Colors)
+Civs = SetupCivs(Civs, World, Chars, Colors)
 
 #Month 0
 Month=0
@@ -951,13 +959,14 @@ while not libtcod.console_is_window_closed():
             BiomeMap(Chars,Colors)
         elif key.c == ord('r'):
             print "\n" * 100
+            print " * NEW WORLD *"
             World = MasterWorldGen()
             Races = ReadRaces()
             Govern = ReadGovern()
             ClearCivs(Civs)
             Civs = CivGen(Races,Govern)
             Chars, Colors = NormalMap(World)
-            SetupCivs(Civs, World, Chars, Colors)
+            SetupCivs(Civs, World, Chars, Colors)            
             BiomeMap(Chars,Colors)
 
 
