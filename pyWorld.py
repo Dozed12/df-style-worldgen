@@ -16,9 +16,10 @@ SCREEN_WIDTH = 65
 SCREEN_HEIGHT = 65
 
 CIVILIZED_CIVS = 2
-TRIBAL_CIVS = 0
+TRIBAL_CIVS = 2
 
-CIV_MAX_SITES = 10
+CIV_MAX_SITES = 15
+EXPANSION_DISTANCE = 7
 MAX_SITE_POP = 20000
 
 ###################################################################################### - Classes - ######################################################################################
@@ -115,10 +116,10 @@ def FlagGenerator(Color):
     Flag = [[0 for a in range(4)] for b in range(12)]
 
     BackColor1 = Color
-    BackColor2 = libtcod.Color(randint(0,255),randint(0,255),randint(0,255))
+    BackColor2 = Palette[randint(0,len(Palette)-1)]
 
-    OverColor1 = libtcod.Color(randint(0,255),randint(0,255),randint(0,255))
-    OverColor2 = libtcod.Color(randint(0,255),randint(0,255),randint(0,255))
+    OverColor1 = Palette[randint(0,len(Palette)-1)]
+    OverColor2 = Palette[randint(0,len(Palette)-1)]
 
     BackFile = open("Background.txt",'r')
     OverlayFile = open("Overlay.txt",'r')
@@ -581,7 +582,7 @@ def CivGen(Races,Govern): #-----------------------------------------------------
         
         Government = Govern[randint(0,len(Govern)-1)]
 
-        Color = libtcod.Color(randint(0,255),randint(0,255),randint(0,255))
+        Color = Palette[randint(0,len(Palette)-1)]
 
         Flag = FlagGenerator(Color)
       
@@ -656,14 +657,9 @@ def SetupCivs(Civs, World, Chars, Colors):
         Chars[X][Y] = 31
         Colors[X][Y] = Civs[x].Color
 
-        print Civs[x].Sites[0].x,Civs[x].Sites[0].y
-
     print '- Civs Setup -'
 
     print ' * Civ Gen DONE *'
-
-    for x in range(len(Civs)):
-        print Civs[x].Sites[0].x,Civs[x].Sites[0].y
 
     return Civs
 
@@ -673,7 +669,7 @@ def NewSite(Civ, Origin, World,Chars,Colors):
 
     rand = randint(0,len(Civ.SuitableSites)-1)
 
-    while PointDistRound(Origin.x, Origin.y, Civ.SuitableSites[rand].x, Civ.SuitableSites[rand].y) > 10 or World[Civ.SuitableSites[rand].x][Civ.SuitableSites[rand].y].isCiv:
+    while PointDistRound(Origin.x, Origin.y, Civ.SuitableSites[rand].x, Civ.SuitableSites[rand].y) > EXPANSION_DISTANCE or World[Civ.SuitableSites[rand].x][Civ.SuitableSites[rand].y].isCiv:
         rand = randint(0,len(Civ.SuitableSites)-1)
 
     X = Civ.SuitableSites[rand].x
@@ -698,7 +694,11 @@ def NewSite(Civ, Origin, World,Chars,Colors):
 
 def ProcessCivs(World,Civs,Chars,Colors,Month):
 
+    print "\n" * 100
+
     for x in range(CIVILIZED_CIVS+TRIBAL_CIVS):
+
+        print Civs[x].Name
 
         #GAINS
         for y in range(len(Civs[x].Sites)):
@@ -712,11 +712,12 @@ def ProcessCivs(World,Civs,Chars,Colors,Month):
             Civs[x].Sites[y].Population += NewPop
 
             if Civs[x].Sites[y].Population > Civs[x].Sites[y].popcap:
-                Civs[x].Sites[y].Population = int(round(Civs[x].Sites[y].popcap / 2))
+                Civs[x].Sites[y].Population = Civs[x].Sites[y].popcap
                 if len(Civs[x].Sites) < CIV_MAX_SITES:
+                    Civs[x].Sites[y].Population = int(round(Civs[x].Sites[y].popcap / 2))
                     Civs[x] = NewSite(Civs[x],Civs[x].Sites[y],World,Chars,Colors)
 
-            print Civs[x].Name,Civs[x].Sites[y].x,Civs[x].Sites[y].y
+            print "X:",Civs[x].Sites[y].x,"Y:",Civs[x].Sites[y].y,"Population:",Civs[x].Sites[y].Population
 
     return
 
@@ -871,8 +872,15 @@ libtcod.console_set_custom_font("Andux_cp866ish.png", libtcod.FONT_LAYOUT_ASCII_
 libtcod.console_init_root(SCREEN_WIDTH, SCREEN_HEIGHT, 'pyWorld', False, libtcod.RENDERER_SDL) #Set True for Fullscreen
 
 #Palette
-Palette = [libtcod.Color(20,150,30), #Green
-           ]
+Palette = [libtcod.Color(20, 150, 30), #Green
+           libtcod.Color(255, 45, 33), #Red
+           libtcod.Color(254, 80, 0),  #Orange
+           libtcod.Color(0, 35, 156),  #Blue
+           libtcod.Color(71, 45, 96),  #Purple
+           libtcod.Color(0, 135, 199), #Ocean Blue
+           libtcod.Color(254, 221, 0), #Yellow
+           libtcod.Color(255, 255, 255), #White
+           libtcod.Color(99, 102, 106)] #Gray
 
 libtcod.sys_set_fps(30)
 #libtcod.console_set_fullscreen(False)
