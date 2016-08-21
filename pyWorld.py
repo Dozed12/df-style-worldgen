@@ -527,7 +527,8 @@ def ReadRaces():
             start = data.index("]") + 1
             end = data.index("\n",start)
             Info[y] = data[start:end]
-        Races[x] = Race(Info[0],int(Info[1]),int(Info[2]),int(Info[3]),int(Info[4]),int(Info[5]),Info[6])
+        PreferedBiomes = [int(s) for s in str.split(Info[1]) if s.isdigit()] #Take numbers from string
+        Races[x] = Race(Info[0],PreferedBiomes,int(Info[2]),int(Info[3]),int(Info[4]),int(Info[5]),Info[6])
         
     f.close()
 
@@ -629,8 +630,9 @@ def SetupCivs(Civs, World, Chars, Colors):
 
         for i in range(WORLD_WIDTH):
             for j in range (WORLD_HEIGHT):
-                if World[i][j].biomeID == Civs[x].Race.PrefBiome:
-                    Civs[x].SuitableSites.append(CivSite(i,j,"",1,0))
+                for g in range (len(Civs[x].Race.PrefBiome)):
+                    if World[i][j].biomeID == Civs[x].Race.PrefBiome[g]:
+                        Civs[x].SuitableSites.append(CivSite(i,j,"",1,0))
             
         rand = randint(0,len(Civs[x].SuitableSites)-1)
         while World[Civs[x].SuitableSites[rand].x][Civs[x].SuitableSites[rand].y].isCiv == True:
@@ -697,6 +699,7 @@ def ProcessCivs(World,Civs,Chars,Colors,Month):
     for x in range(CIVILIZED_CIVS+TRIBAL_CIVS):
 
         print Civs[x].Name
+        print Civs[x].Race.Name
 
         #GAINS
         for y in range(len(Civs[x].Sites)):
