@@ -1,9 +1,7 @@
 import libtcodpy as libtcod
-import math
 import time
 from random import randint
 from random import uniform
-
 import cProfile
 
 pr = cProfile.Profile()
@@ -341,7 +339,7 @@ def RiverGen(World):
         X,Y = LowestNeighbour(X,Y,World)
 
         try:
-            if World[X][Y].hasRiver == True or World[X+1][Y].hasRiver or World[X-1][Y].hasRiver or World[X][Y+1].hasRiver or World[X][Y-1].hasRiver or World[X][Y].height < 0.2:
+            if World[X][Y].hasRiver or World[X+1][Y].hasRiver or World[X-1][Y].hasRiver or World[X][Y+1].hasRiver or World[X][Y-1].hasRiver or World[X][Y].height < 0.2:
                 break
         except IndexError:
             return
@@ -645,7 +643,7 @@ def SetupCivs(Civs, World, Chars, Colors):
         World[X][Y].isCiv = True
         
         FinalProsperity = World[X][Y].prosperity * 150
-        if World[X][Y].hasRiver == True:
+        if World[X][Y].hasRiver:
             FinalProsperity = FinalProsperity * 1.5
         PopCap = 3 * Civs[x].Race.ReproductionSpeed + FinalProsperity
         PopCap = round(PopCap)
@@ -678,7 +676,7 @@ def NewSite(Civ, Origin, World,Chars,Colors):
     World[X][Y].isCiv = True
 
     FinalProsperity = World[X][Y].prosperity * 150
-    if World[X][Y].hasRiver == True:
+    if World[X][Y].hasRiver:
         FinalProsperity = FinalProsperity * 1.5    
     PopCap = 3 * Civ.Race.ReproductionSpeed + FinalProsperity
     PopCap = round(PopCap)
@@ -859,7 +857,7 @@ def NormalMap(World):  # -------------------------------------------------------
         for y in xrange(WORLD_HEIGHT):
             Chars[x][y] = SymbolDictionary(World[x][y].biomeID)
             Colors[x][y] = ColorDictionary(World[x][y].biomeID)
-            if World[x][y].hasRiver == True:
+            if World[x][y].hasRiver:
                 Chars[x][y] = 'o'
                 Colors[x][y] = libtcod.light_blue
 
@@ -882,7 +880,7 @@ Palette = [libtcod.Color(20, 150, 30), #Green
            libtcod.Color(255, 255, 255), #White
            libtcod.Color(99, 102, 106)] #Gray
 
-libtcod.sys_set_fps(30)
+#libtcod.sys_set_fps(30)
 #libtcod.console_set_fullscreen(False)
 
 ################################################################################# - Main Cycle / Input - ##################################################################################
@@ -934,7 +932,6 @@ while not libtcod.console_is_window_closed():
 
         #Flush Console
         BiomeMap(Chars,Colors)
-        libtcod.console_flush()
       
     key = libtcod.console_wait_for_keypress(True)
 
@@ -944,6 +941,7 @@ while not libtcod.console_is_window_closed():
         print "*RUNNING*"
         time.sleep(1)
 
+    #Profiler
     if libtcod.console_is_key_pressed(libtcod.KEY_ESCAPE):
         isRunning = False
         
