@@ -669,7 +669,7 @@ def NewSite(Civ, Origin, World,Chars,Colors):
 
     Tries = 0
     
-    while (PointDistRound(Origin.x, Origin.y, Civ.SuitableSites[rand].x, Civ.SuitableSites[rand].y) > EXPANSION_DISTANCE or World[Civ.SuitableSites[rand].x][Civ.SuitableSites[rand].y].isCiv) and Tries < 500:
+    while (PointDistRound(Origin.x, Origin.y, Civ.SuitableSites[rand].x, Civ.SuitableSites[rand].y) > EXPANSION_DISTANCE or World[Civ.SuitableSites[rand].x][Civ.SuitableSites[rand].y].isCiv) and Tries < 100:
         Tries += 1
         rand = randint(0,len(Civ.SuitableSites)-1)
 
