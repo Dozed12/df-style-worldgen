@@ -73,6 +73,7 @@ class Civ:
         print self.Race.Name
         print self.Government.Name
         print 'Aggression:',self.Aggression
+        print 'Suitable Sites:',len(self.SuitableSites),'\n'
 
     Sites = []
     SuitableSites = []
@@ -651,6 +652,8 @@ def SetupCivs(Civs, World, Chars, Colors):
 
         Chars[X][Y] = 31
         Colors[X][Y] = Civs[x].Color
+
+        Civs[x].PrintInfo()
         
     print '- Civs Setup -'
 
@@ -664,7 +667,10 @@ def NewSite(Civ, Origin, World,Chars,Colors):
 
     rand = randint(0,len(Civ.SuitableSites)-1)
 
-    while PointDistRound(Origin.x, Origin.y, Civ.SuitableSites[rand].x, Civ.SuitableSites[rand].y) > EXPANSION_DISTANCE or World[Civ.SuitableSites[rand].x][Civ.SuitableSites[rand].y].isCiv:
+    Tries = 0
+    
+    while (PointDistRound(Origin.x, Origin.y, Civ.SuitableSites[rand].x, Civ.SuitableSites[rand].y) > EXPANSION_DISTANCE or World[Civ.SuitableSites[rand].x][Civ.SuitableSites[rand].y].isCiv) and Tries < 500:
+        Tries += 1
         rand = randint(0,len(Civ.SuitableSites)-1)
 
     X = Civ.SuitableSites[rand].x
@@ -700,7 +706,7 @@ def ProcessCivs(World,Civs,Chars,Colors,Month):
         for y in range(len(Civs[x].Sites)):
 
             #Population
-            NewPop = Civs[x].Sites[y].Population * Civs[x].Race.ReproductionSpeed/1500
+            NewPop = int(round(Civs[x].Sites[y].Population * Civs[x].Race.ReproductionSpeed/1500 + World[Civs[x].Sites[y].x][Civs[x].Sites[y].y].prosperity/2))
 
             if Civs[x].Sites[y].Population > Civs[x].Sites[y].popcap / 2:
                 NewPop /= 4                                
