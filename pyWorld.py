@@ -58,6 +58,8 @@ class CivSite:
 
     Population = 0
 
+    isCapital = False
+
 class Civ:
 
     def __init__(self,Race,Name,Government,Color,Flag,Aggression):
@@ -78,6 +80,8 @@ class Civ:
     Sites = []
     SuitableSites = []
 
+    TotalPopulation = 0
+
 class GovernmentType:
 
     def __init__(self,Name,Description,Aggressiveness,Militarizantion,TechBonus):
@@ -86,6 +90,14 @@ class GovernmentType:
         self.Aggressiveness = Aggressiveness
         self.Militarizantion = Militarizantion
         self.TechBonus = TechBonus
+
+class Army:
+
+    def __init__(self,x,y,Civ,Size):
+        self.x = x
+        self.y = y
+        self.Civ = Civ
+        Self.Size = Size
 
 ##################################################################################### - Functions - #####################################################################################
 
@@ -468,7 +480,7 @@ def MasterWorldGen():    #------------------------------------------------------
                 World[x][y].biomeID = 5
                 if randint(1,10) < 3:
                     World[x][y].biomeID = 14
-            if World[x][y].temp >= 0.5 and World[x][y].precip >= 0.7:
+            if World[x][y].temp >= 0.5 and World[x][y].precip >= 0.5:
                 World[x][y].biomeID = 6
 
             if World[x][y].precip >= 0.7 and World[x][y].height > 0.2 and World[x][y].height <= 0.4:
@@ -643,10 +655,13 @@ def SetupCivs(Civs, World, Chars, Colors):
         FinalProsperity = World[X][Y].prosperity * 150
         if World[X][Y].hasRiver:
             FinalProsperity = FinalProsperity * 1.5
-        PopCap = 3 * Civs[x].Race.ReproductionSpeed + FinalProsperity
+        PopCap = 4 * Civs[x].Race.ReproductionSpeed + FinalProsperity
+        PopCap = PopCap * 2 #Capital Bonus
         PopCap = round(PopCap)
         
         Civs[x].Sites.append (CivSite(X,Y,"Village",0,PopCap))
+
+        Civs[x].Sites[0].isCapital = True
         
         Civs[x].Sites[0].Population = 20
 
@@ -695,29 +710,33 @@ def NewSite(Civ, Origin, World,Chars,Colors):
 
 def ProcessCivs(World,Civs,Chars,Colors,Month):
 
-    print "\n" * 100
-
+    print "------------------------------------------"
+    
     for x in range(CIVILIZED_CIVS+TRIBAL_CIVS):
 
         print Civs[x].Name
         print Civs[x].Race.Name
 
-        #GAINS
+        Civs[x].TotalPopulation = 0
+
+        #Site
         for y in range(len(Civs[x].Sites)):
 
             #Population
-            NewPop = int(round(Civs[x].Sites[y].Population * Civs[x].Race.ReproductionSpeed/1500 + World[Civs[x].Sites[y].x][Civs[x].Sites[y].y].prosperity/2))
+            NewPop = int(round(Civs[x].Sites[y].Population * Civs[x].Race.ReproductionSpeed/1500))
 
             if Civs[x].Sites[y].Population > Civs[x].Sites[y].popcap / 2:
-                NewPop /= 4                                
-            
+                NewPop /= 6
+                
             Civs[x].Sites[y].Population += NewPop
 
             if Civs[x].Sites[y].Population > Civs[x].Sites[y].popcap:
-                Civs[x].Sites[y].Population = Civs[x].Sites[y].popcap
+                Civs[x].Sites[y].Population = int(round(Civs[x].Sites[y].popcap))
                 if len(Civs[x].Sites) < CIV_MAX_SITES:
                     Civs[x].Sites[y].Population = int(round(Civs[x].Sites[y].popcap / 2))
                     Civs[x] = NewSite(Civs[x],Civs[x].Sites[y],World,Chars,Colors)
+
+            Civs[x].TotalPopulation += Civs[x].Sites[y].Population
 
             print "X:",Civs[x].Sites[y].x,"Y:",Civs[x].Sites[y].y,"Population:",Civs[x].Sites[y].Population
 
@@ -912,6 +931,9 @@ Civs = CivGen(Races,Govern)
 
 #Setup Civs
 Civs = SetupCivs(Civs, World, Chars, Colors)
+
+#Print Map
+BiomeMap(Chars,Colors)
 
 #Month 0
 Month=0
