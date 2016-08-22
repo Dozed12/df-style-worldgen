@@ -18,7 +18,6 @@ TRIBAL_CIVS = 2
 
 CIV_MAX_SITES = 15
 EXPANSION_DISTANCE = 7
-MAX_SITE_POP = 20000
 
 ###################################################################################### - Classes - ######################################################################################
 
@@ -613,18 +612,13 @@ def CivGen(Races,Govern): #-----------------------------------------------------
 
     return Civs
 
-def ClearCivs(Civs):
-
-    for x in range(len(Civs)-1):
-        del Civs[x].SuitableSites[:]
-
-    return
-
 def SetupCivs(Civs, World, Chars, Colors):
 
     for x in range(len(Civs)):
 
         Civs[x].Sites = []
+
+        del Civs[x].SuitableSites[:]
 
         #Civs[x].PrintInfo()
 
@@ -656,7 +650,7 @@ def SetupCivs(Civs, World, Chars, Colors):
 
         Chars[X][Y] = 31
         Colors[X][Y] = Civs[x].Color
-
+        
     print '- Civs Setup -'
 
     print ' * Civ Gen DONE *'
@@ -719,6 +713,8 @@ def ProcessCivs(World,Civs,Chars,Colors,Month):
                     Civs[x] = NewSite(Civs[x],Civs[x].Sites[y],World,Chars,Colors)
 
             print "X:",Civs[x].Sites[y].x,"Y:",Civs[x].Sites[y].y,"Population:",Civs[x].Sites[y].Population
+
+        print '\n'
 
     return
 
@@ -972,7 +968,6 @@ while not libtcod.console_is_window_closed():
             World = MasterWorldGen()
             Races = ReadRaces()
             Govern = ReadGovern()
-            ClearCivs(Civs)
             Civs = CivGen(Races,Govern)
             Chars, Colors = NormalMap(World)
             SetupCivs(Civs, World, Chars, Colors)            
