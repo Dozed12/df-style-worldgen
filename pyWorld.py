@@ -617,6 +617,7 @@ def SetupCivs(Civs, World, Chars, Colors):
     for x in range(len(Civs)):
 
         Civs[x].Sites = []
+        Civs[x].SuitableSites = []
 
         del Civs[x].SuitableSites[:]
 
