@@ -13,8 +13,8 @@ WORLD_HEIGHT = 65
 SCREEN_WIDTH = 65
 SCREEN_HEIGHT = 65
 
-CIVILIZED_CIVS = 2
-TRIBAL_CIVS = 2
+CIVILIZED_CIVS = 0
+TRIBAL_CIVS = 0
 
 CIV_MAX_SITES = 15
 EXPANSION_DISTANCE = 7
@@ -97,7 +97,7 @@ class Army:
         self.x = x
         self.y = y
         self.Civ = Civ
-        Self.Size = Size
+        self.Size = Size
 
 ##################################################################################### - Functions - #####################################################################################
 
@@ -276,7 +276,7 @@ def TectonicGen(hm, hor):
     #Apply elevation to borders
     for x in xrange(WORLD_WIDTH/10,WORLD_WIDTH - WORLD_WIDTH/10):
         for y in xrange(WORLD_HEIGHT/10,WORLD_HEIGHT - WORLD_HEIGHT/10):
-                if TecTiles[x][y] == 1 and libtcod.heightmap_get_value(hm, x, y) > 0.25:
+                if TecTiles[x][y] == 1 and libtcod.heightmap_get_value(hm, x, y) > 0.3:
                     libtcod.heightmap_add_hill(hm, x, y, randint(2,4), uniform(0.15,0.18))                        
 
     return
@@ -313,13 +313,10 @@ def Percipitaion(preciphm, temphm):
     for x in xrange(WORLD_WIDTH):
         for y in xrange(WORLD_HEIGHT):
             temp = libtcod.heightmap_get_value(temphm, x, y)
-            if temp > 0.7:
-                val = libtcod.heightmap_get_value(preciphm,x,y)
-                libtcod.heightmap_set_value(preciphm, x, y, val - temp)
                         
     precip = libtcod.noise_new(2,libtcod.NOISE_DEFAULT_HURST, libtcod.NOISE_DEFAULT_LACUNARITY)
 
-    libtcod.heightmap_add_fbm(preciphm,precip ,8, 8, 0, 0, 32, 1, 1)
+    libtcod.heightmap_add_fbm(preciphm,precip ,2, 2, 0, 0, 32, 1, 1)
 
     libtcod.heightmap_normalize(preciphm, 0.0, 1.0)                       
 
@@ -371,7 +368,7 @@ def Prosperity(World):
 
     for x in xrange(WORLD_WIDTH):
         for y in xrange(WORLD_HEIGHT):
-            World[x][y].prosperity = (0.8 - abs(World[x][y].precip - 0.6) + 0.8 - abs(World[x][y].temp - 0.5) + World[x][y].drainage)/3
+            World[x][y].prosperity = (1.0 - abs(World[x][y].precip - 0.6) + 1.0 - abs(World[x][y].temp - 0.5) + World[x][y].drainage)/3
 
     return
 
@@ -418,14 +415,14 @@ def MasterWorldGen():    #------------------------------------------------------
     #Temperature
     temp = libtcod.heightmap_new(WORLD_WIDTH, WORLD_HEIGHT)   
     Temperature(temp,hm)
-    libtcod.heightmap_normalize(temp, 0.0, 0.8)
+    libtcod.heightmap_normalize(temp, 0.0, 1.0)
     print '- Temperature Calculation -'     
 
     #Precipitation
 
     preciphm = libtcod.heightmap_new(WORLD_WIDTH, WORLD_HEIGHT)
     Percipitaion(preciphm, temp)
-    libtcod.heightmap_normalize(preciphm, 0.0, 0.8)
+    libtcod.heightmap_normalize(preciphm, 0.0, 1.0)
     print '- Percipitaion Calculation -'
 
     #Drainage
@@ -433,7 +430,7 @@ def MasterWorldGen():    #------------------------------------------------------
     drainhm = libtcod.heightmap_new(WORLD_WIDTH, WORLD_HEIGHT)
     drain = libtcod.noise_new(2,libtcod.NOISE_DEFAULT_HURST, libtcod.NOISE_DEFAULT_LACUNARITY)
     libtcod.heightmap_add_fbm(drainhm,drain ,2, 2, 0, 0, 32, 1, 1)
-    libtcod.heightmap_normalize(drainhm, 0.0, 0.8)
+    libtcod.heightmap_normalize(drainhm, 0.0, 1.0)
     print '- Drainage Calculation -'
       
     # VOLCANISM - RARE AT SEA FOR NEW ISLANDS (?) RARE AT MOUNTAINS > 0.9 (?) RARE AT TECTONIC BORDERS (?)
@@ -462,47 +459,38 @@ def MasterWorldGen():    #------------------------------------------------------
 
     for x in xrange(WORLD_WIDTH):
         for y in xrange(WORLD_HEIGHT):
-            
+
             if World[x][y].height > 0.2:
                 World[x][y].biomeID = 3
-                if randint(1,10) < 3:
-                    World[x][y].biomeID = 5
-            if World[x][y].height > 0.4:
-                World[x][y].biomeID = 14
-                if randint(1,10) < 3:
-                    World[x][y].biomeID = 5
-            if World[x][y].height > 0.5:
-                World[x][y].biomeID = 8
-                if randint(1,10) < 3:
-                    World[x][y].biomeID = 14
 
-            if World[x][y].temp <= 0.5 and World[x][y].precip >= 0.5:
+            if World[x][y].height > 0.2 and World[x][y].precip >= 0.33 and World[x][y].temp > 0.2 and World[x][y].drainage <= 0.2:
+                World[x][y].biomeID = 2 
+
+            if World[x][y].height > 0.2 and World[x][y].temp > 0.2 and World[x][y].precip >= 0.66 and World[x][y].drainage > 0.66:
                 World[x][y].biomeID = 5
-                if randint(1,10) < 3:
-                    World[x][y].biomeID = 14
-            if World[x][y].temp >= 0.5 and World[x][y].precip >= 0.5:
-                World[x][y].biomeID = 6
+                if World[x][y].precip >= 0.85 and World[x][y].temp > 0.6:
+                    World[x][y].biomeID = 6
 
-            if World[x][y].precip >= 0.7 and World[x][y].height > 0.2 and World[x][y].height <= 0.4:
-                World[x][y].biomeID = 2
+            if World[x][y].height > 0.2 and World[x][y].temp > 0.2 and World[x][y].precip < 0.66 and World[x][y].drainage > 0.66:
+                World[x][y].biomeID = 14
+                if World[x][y].height > 0.4:
+                    World[x][y].biomeID = 8
 
-            if World[x][y].temp > 0.75 and World[x][y].precip < 0.35:
-                World[x][y].biomeID = 4
+            if World[x][y].height > 0.2 and World[x][y].temp > 0.2 and World[x][y].precip < 0.09:
+                World[x][y].biomeID = 4                     
 
-            if World[x][y].temp <= 0.22 and World[x][y].height > 0.2:
+            if World[x][y].temp <= 0.2 and World[x][y].height > 0.2:
                 World[x][y].biomeID = randint(11,13)
-            if World[x][y].temp <= 0.3 and World[x][y].temp > 0.2 and World[x][y].height > 0.2 and World[x][y].precip >= 0.6:
-                World[x][y].biomeID = 7
-                  
-            if World[x][y].height > 0.75:
-                World[x][y].biomeID = 9
-            if World[x][y].height > 0.999:
-                World[x][y].biomeID = 10                  
+
             if World[x][y].height <= 0.2:
                 World[x][y].biomeID = 0
-            if World[x][y].height <= 0.1:
-                World[x][y].biomeID = 0
 
+            if World[x][y].height > 0.7:
+                World[x][y].biomeID = 9
+            if World[x][y].height > 0.9:
+                World[x][y].biomeID = 10
+                  
+            
     print '- BiomeIDs Atributed -'
       
     #River Gen
