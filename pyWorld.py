@@ -7,14 +7,14 @@ import cProfile
 pr = cProfile.Profile()
 pr.enable()
 
-WORLD_WIDTH = 65
-WORLD_HEIGHT = 65
+WORLD_WIDTH = 200
+WORLD_HEIGHT = 80
 
-SCREEN_WIDTH = 65
-SCREEN_HEIGHT = 65
+SCREEN_WIDTH = 200
+SCREEN_HEIGHT = 80
 
-CIVILIZED_CIVS = 0
-TRIBAL_CIVS = 0
+CIVILIZED_CIVS = 2
+TRIBAL_CIVS = 2
 
 CIV_MAX_SITES = 15
 EXPANSION_DISTANCE = 7
@@ -231,10 +231,10 @@ def PoleGen(hm, NS):
                 for j in range(rng):
                     libtcod.heightmap_set_value(hm, i, WORLD_HEIGHT - 1 - j , 0.31)
                 rng += randint(1,3)-2
-                if rng > 4:
-                    rng = 3
-                if rng < 1:
-                    rng = 1
+                if rng > 6:
+                    rng = 5
+                if rng < 2:
+                    rng = 2
 
     if NS == 1:
         rng = randint(0,4)
@@ -242,10 +242,10 @@ def PoleGen(hm, NS):
                 for j in range(rng):
                     libtcod.heightmap_set_value(hm, i, j , 0.31)
                 rng += randint(1,3)-2
-                if rng > 4:
-                    rng = 3
-                if rng < 1:
-                    rng = 1
+                if rng > 6:
+                    rng = 5
+                if rng < 2:
+                    rng = 2
 
     return
 
@@ -380,11 +380,11 @@ def MasterWorldGen():    #------------------------------------------------------
     #Heightmap
     hm = libtcod.heightmap_new(WORLD_WIDTH, WORLD_HEIGHT)
 
-    for i in range(50):
+    for i in range(250):
         libtcod.heightmap_add_hill(hm, randint(WORLD_WIDTH/10,WORLD_WIDTH- WORLD_WIDTH/10), randint(WORLD_HEIGHT/10,WORLD_HEIGHT- WORLD_HEIGHT/10), randint(12,16), randint(6,10))
     print '- Main Hills -'
 
-    for i in range(200):
+    for i in range(1000):
         libtcod.heightmap_add_hill(hm, randint(WORLD_WIDTH/10,WORLD_WIDTH- WORLD_WIDTH/10), randint(WORLD_HEIGHT/10,WORLD_HEIGHT- WORLD_HEIGHT/10), randint(2,4), randint(6,10))
     print '- Small Hills -'
 
@@ -392,7 +392,7 @@ def MasterWorldGen():    #------------------------------------------------------
 
     noisehm = libtcod.heightmap_new(WORLD_WIDTH, WORLD_HEIGHT)
     noise2d = libtcod.noise_new(2,libtcod.NOISE_DEFAULT_HURST, libtcod.NOISE_DEFAULT_LACUNARITY)
-    libtcod.heightmap_add_fbm(noisehm, noise2d,4, 4, 0, 0, 32, 1, 1)
+    libtcod.heightmap_add_fbm(noisehm, noise2d,6, 6, 0, 0, 32, 1, 1)
     libtcod.heightmap_normalize(noisehm, 0.0, 1.0)
     libtcod.heightmap_multiply_hm(hm, noisehm, hm)
     print '- Apply Simplex -'
@@ -439,7 +439,7 @@ def MasterWorldGen():    #------------------------------------------------------
     print ' * World Gen DONE *    in: ',elapsed_time,' seconds'
 
     #Initialize Tiles with Map values
-    World = [[0 for y in range(WORLD_HEIGHT)] for x in range(WORLD_WIDTH)] #100x100 array
+    World = [[0 for y in range(WORLD_HEIGHT)] for x in range(WORLD_WIDTH)]
     for x in xrange(WORLD_WIDTH):
         for y in xrange(WORLD_HEIGHT):
                 World[x][y] = Tile(libtcod.heightmap_get_value(hm, x, y),
@@ -460,32 +460,49 @@ def MasterWorldGen():    #------------------------------------------------------
     for x in xrange(WORLD_WIDTH):
         for y in xrange(WORLD_HEIGHT):
 
-            if World[x][y].height > 0.2:
+            if World[x][y].precip >= 0.10 and World[x][y].precip < 0.33 and World[x][y].drainage < 0.5:
                 World[x][y].biomeID = 3
+                if randint(1,2) == 2:
+                    World[x][y].biomeID = 16
 
-            if World[x][y].height > 0.2 and World[x][y].precip >= 0.33 and World[x][y].temp > 0.2 and World[x][y].drainage <= 0.2:
-                World[x][y].biomeID = 2 
+            if World[x][y].precip >= 0.10 and World[x][y].precip > 0.33:
+                World[x][y].biomeID = 2
+                if World[x][y].precip >= 0.66:
+                    World[x][y].biomeID = 1
 
-            if World[x][y].height > 0.2 and World[x][y].temp > 0.2 and World[x][y].precip >= 0.66 and World[x][y].drainage > 0.66:
+            if World[x][y].precip >= 0.33 and World[x][y].precip < 0.66 and World[x][y].drainage >= 0.33:
+                World[x][y].biomeID = 15
+                if randint(1,5) == 5:
+                    World[x][y].biomeID = 5
+
+            if World[x][y].temp > 0.2 and World[x][y].precip >= 0.66 and World[x][y].drainage > 0.33:
                 World[x][y].biomeID = 5
-                if World[x][y].precip >= 0.85 and World[x][y].temp > 0.6:
+                if World[x][y].precip >= 0.75:
                     World[x][y].biomeID = 6
+                if randint(1,5) == 5:
+                    World[x][y].biomeID = 15
 
-            if World[x][y].height > 0.2 and World[x][y].temp > 0.2 and World[x][y].precip < 0.66 and World[x][y].drainage > 0.66:
-                World[x][y].biomeID = 14
-                if World[x][y].height > 0.4:
+            if World[x][y].precip >= 0.10 and World[x][y].precip < 0.33 and World[x][y].drainage >= 0.5:
+                World[x][y].biomeID = 16
+                if randint(1,2) == 2:
+                        World[x][y].biomeID = 14
+
+            if World[x][y].precip < 0.10:
+                World[x][y].biomeID = 4
+                if World[x][y].drainage > 0.5:
+                    World[x][y].biomeID = 16
+                    if randint(1,2) == 2:
+                        World[x][y].biomeID = 14
+                if World[x][y].drainage >= 0.66:
                     World[x][y].biomeID = 8
-
-            if World[x][y].height > 0.2 and World[x][y].temp > 0.2 and World[x][y].precip < 0.09:
-                World[x][y].biomeID = 4                     
-
-            if World[x][y].temp <= 0.2 and World[x][y].height > 0.2:
-                World[x][y].biomeID = randint(11,13)
 
             if World[x][y].height <= 0.2:
                 World[x][y].biomeID = 0
 
-            if World[x][y].height > 0.7:
+            if World[x][y].temp <= 0.2 and World[x][y].height > 0.15:
+                World[x][y].biomeID = randint(11,13)
+
+            if World[x][y].height > 0.6:
                 World[x][y].biomeID = 9
             if World[x][y].height > 0.9:
                 World[x][y].biomeID = 10
@@ -825,43 +842,66 @@ def NormalMap(World):  # -------------------------------------------------------
     Colors = [[0 for y in range(WORLD_HEIGHT)] for x in range(WORLD_WIDTH)]
 
     def SymbolDictionary(x):
+        char = ''
+        if x == 15 or x == 8:
+            if randint(1,2) == 2:
+                char = 251
+            else:
+                char = ','
+        if x == 1:
+            if randint(1,2) == 2:
+                char = 244
+            else:
+                char = 131
+        if x == 2:
+            if randint(1,2) == 2:
+                char = '"'
+            else:
+                char = 163
         return {
             0: '\367',
-            1: '\367',
-            2: 'n',
-            3: 'u',
-            4: 'n',
-            5: 6-randint(0,1),
+            1: char,
+            2: char,
+            3: 'n',
+            4: '\367',
+            5: 24,
             6: 6-randint(0,1),
-            7: 6-randint(0,1),
-            8: 139,
+            8: char,
             9: 127,
             10: 30,
             11: 176,
             12: 177,
             13: 178,
-            14: 'n'
+            14: 'n',
+            15: char,
+            16: 139
         }[x]
 
     def ColorDictionary(x):
-        marshcolor = libtcod.Color(71,114,75)
-        icecolor = libtcod.Color(7,125,126)
+        badlands = libtcod.Color(204, 159, 81)
+        icecolor = libtcod.Color(176, 223, 215)
+        darkgreen = libtcod.Color(68,158,53)
+        lightgreen = libtcod.Color(131,212,82)
+        water = libtcod.Color(13,103,196)
+        mountain = libtcod.Color(185,192,162)
+        desert = libtcod.Color(255,218,90)
         return {
-            0: libtcod.dark_blue,
-            1: libtcod.light_blue,
-            2: marshcolor,
-            3: libtcod.dark_green,
-            4: libtcod.dark_yellow,
-            5: libtcod.dark_green,
-            6: libtcod.darker_green,
-            7: icecolor,
-            8: libtcod.dark_green,
-            9: libtcod.light_grey,
-            10: libtcod.grey,
+            0: water,
+            1: darkgreen,
+            2: lightgreen,
+            3: lightgreen,
+            4: desert,
+            5: darkgreen,
+            6: darkgreen,
+            8: badlands,
+            9: mountain,
+            10: mountain,
             11: icecolor,
             12: icecolor,
             13: icecolor,
-            14: libtcod.dark_green
+            14: lightgreen,
+            15: lightgreen,
+            16: lightgreen
         }[x]
 
     World[0][0].hasRiver = False #Fixes unknown bug
@@ -894,7 +934,7 @@ Palette = [libtcod.Color(20, 150, 30), #Green
            libtcod.Color(99, 102, 106)] #Gray
 
 #libtcod.sys_set_fps(30)
-#libtcod.console_set_fullscreen(False)
+#libtcod.console_set_fullscreen(True)
 
 ################################################################################# - Main Cycle / Input - ##################################################################################
 
