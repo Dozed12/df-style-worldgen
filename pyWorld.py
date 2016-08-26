@@ -16,8 +16,8 @@ SCREEN_HEIGHT = 80
 CIVILIZED_CIVS = 2
 TRIBAL_CIVS = 2
 
-CIV_MAX_SITES = 15
-EXPANSION_DISTANCE = 7
+CIV_MAX_SITES = 20
+EXPANSION_DISTANCE = 10
 
 ###################################################################################### - Classes - ######################################################################################
 
@@ -118,6 +118,8 @@ def PointDistRound(pt1x, pt1y, pt2x, pt2y):
     distance = abs(pt2x - pt1x) + abs(pt2y - pt1y);
 
     distance = round(distance)
+
+    print distance
 
     return distance
 
@@ -689,7 +691,9 @@ def NewSite(Civ, Origin, World,Chars,Colors):
 
     Tries = 0
     
-    while (PointDistRound(Origin.x, Origin.y, Civ.SuitableSites[rand].x, Civ.SuitableSites[rand].y) > EXPANSION_DISTANCE or World[Civ.SuitableSites[rand].x][Civ.SuitableSites[rand].y].isCiv) and Tries < 100:
+    while PointDistRound(Origin.x, Origin.y, Civ.SuitableSites[rand].x, Civ.SuitableSites[rand].y) > EXPANSION_DISTANCE or World[Civ.SuitableSites[rand].x][Civ.SuitableSites[rand].y].isCiv:
+        if Tries > 200:
+            return Civ
         Tries += 1
         rand = randint(0,len(Civ.SuitableSites)-1)
 
@@ -899,9 +903,9 @@ def NormalMap(World):  # -------------------------------------------------------
             11: icecolor,
             12: icecolor,
             13: icecolor,
-            14: lightgreen,
+            14: darkgreen,
             15: lightgreen,
-            16: lightgreen
+            16: darkgreen
         }[x]
 
     World[0][0].hasRiver = False #Fixes unknown bug
@@ -1022,6 +1026,7 @@ while not libtcod.console_is_window_closed():
         elif key.c == ord('r'):
             print "\n" * 100
             print " * NEW WORLD *"
+            Month=0
             World = MasterWorldGen()
             Races = ReadRaces()
             Govern = ReadGovern()
