@@ -16,6 +16,7 @@ SCREEN_HEIGHT = 80
 CIVILIZED_CIVS = 2
 TRIBAL_CIVS = 2
 
+MIN_RIVER_LENGHT = 3
 CIV_MAX_SITES = 20
 EXPANSION_DISTANCE = 10
 
@@ -221,14 +222,19 @@ def LowestNeighbour(X,Y,World):   #Diagonals are commented for rivers
         #x = X - 1
         #y = Y + 1
 
-    return (x,y)
+    error = 0
+
+    if x == 0 and y == 0:
+        error = 1
+
+    return (x,y,error)
 
 # - MapGen Functions -
 
 def PoleGen(hm, NS):
 
     if NS == 0:
-        rng = randint(0,4)
+        rng = randint(2,5)
         for i in range(WORLD_WIDTH):      
                 for j in range(rng):
                     libtcod.heightmap_set_value(hm, i, WORLD_HEIGHT - 1 - j , 0.31)
@@ -239,7 +245,7 @@ def PoleGen(hm, NS):
                     rng = 2
 
     if NS == 1:
-        rng = randint(0,4)
+        rng = randint(2,5)
         for i in range(WORLD_WIDTH):      
                 for j in range(rng):
                     libtcod.heightmap_set_value(hm, i, j , 0.31)
@@ -329,7 +335,12 @@ def RiverGen(World):
     X = randint(0,WORLD_WIDTH-1)
     Y = randint(0,WORLD_HEIGHT-1)
 
+    XCoor = []
+    YCoor = []
+
     tries = 0
+
+    prev = ""
 
     while World[X][Y].height < 0.8:
         tries += 1
@@ -339,30 +350,46 @@ def RiverGen(World):
         if tries > 2000:
             return
 
-    XCoor = []
-    YCoor = []
+    print X,Y,World[X][Y].height
+
+    del XCoor[:]
+    del YCoor[:]
       
     XCoor.append(X)
     YCoor.append(Y)
 
-    for x in range(1,20):
+    while World[X][Y].height >= 0.2:
 
-        X,Y = LowestNeighbour(X,Y,World)
+        X,Y,error = LowestNeighbour(X,Y,World)
+
+        if error == 1:
+            return
+
+        print X,Y
 
         try:
-            if World[X][Y].hasRiver or World[X+1][Y].hasRiver or World[X-1][Y].hasRiver or World[X][Y+1].hasRiver or World[X][Y-1].hasRiver or World[X][Y].height < 0.2:
+            if World[X][Y].hasRiver or World[X+1][Y].hasRiver or World[X-1][Y].hasRiver or World[X][Y+1].hasRiver or World[X][Y-1].hasRiver:
                 break
         except IndexError:
             return
 
+        if X in XCoor and Y in YCoor:
+            break
+
         XCoor.append(X)
         YCoor.append(Y)
 
-    if len(XCoor) <= 2:
+    if len(XCoor) <= MIN_RIVER_LENGHT:
         return
 
+    print len(XCoor)
+
     for x in range(len(XCoor)):
+        if World[XCoor[x]][YCoor[x]].height < 0.2:
+            break
         World[XCoor[x]][YCoor[x]].hasRiver = True
+        if World[XCoor[x]][YCoor[x]].height >= 0.2 and x == len(XCoor):
+            World[XCoor[x]][YCoor[x]].hasRiver = True # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~Change to Lake later
 
     return
 
