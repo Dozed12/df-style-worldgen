@@ -37,6 +37,7 @@ Keys:
 - w - Display Temperature Map Mode
 - h - Display Altitude Map Mode
 - t - Display Obsolete Terrain Map Mode
+- f - Display Prosperity Map Mode
 
 Simulation:
 
