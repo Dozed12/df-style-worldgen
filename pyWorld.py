@@ -17,8 +17,10 @@ CIVILIZED_CIVS = 2
 TRIBAL_CIVS = 2
 
 MIN_RIVER_LENGHT = 3
+
 CIV_MAX_SITES = 20
 EXPANSION_DISTANCE = 10
+WAR_DISTANCE = 8
 
 ###################################################################################### - Classes - ######################################################################################
 
@@ -100,6 +102,12 @@ class Army:
         self.Civ = Civ
         self.Size = Size
 
+class War:
+
+    def __init__(self,Side1,Side2):
+        self.Side1 = Side1
+        self.Side2 = Side2
+
 ##################################################################################### - Functions - #####################################################################################
 
 # - General Functions -
@@ -119,8 +127,6 @@ def PointDistRound(pt1x, pt1y, pt2x, pt2y):
     distance = abs(pt2x - pt1x) + abs(pt2y - pt1y);
 
     distance = round(distance)
-
-    print distance
 
     return distance
 
@@ -350,8 +356,6 @@ def RiverGen(World):
         if tries > 2000:
             return
 
-    print X,Y,World[X][Y].height
-
     del XCoor[:]
     del YCoor[:]
       
@@ -364,8 +368,6 @@ def RiverGen(World):
 
         if error == 1:
             return
-
-        print X,Y
 
         try:
             if World[X][Y].hasRiver or World[X+1][Y].hasRiver or World[X-1][Y].hasRiver or World[X][Y+1].hasRiver or World[X][Y-1].hasRiver:
@@ -381,8 +383,6 @@ def RiverGen(World):
 
     if len(XCoor) <= MIN_RIVER_LENGHT:
         return
-
-    print len(XCoor)
 
     for x in range(len(XCoor)):
         if World[XCoor[x]][YCoor[x]].height < 0.2:
@@ -541,7 +541,7 @@ def MasterWorldGen():    #------------------------------------------------------
       
     #River Gen
       
-    for x in range(5):
+    for x in range(1):
         RiverGen(World)
     print '- River Gen -'
 
@@ -753,7 +753,7 @@ def ProcessCivs(World,Civs,Chars,Colors,Month):
         print Civs[x].Name
         print Civs[x].Race.Name
 
-        Civs[x].TotalPopulation = 0
+        Civs[x].TotalPopulation = 0                                
 
         #Site
         for y in range(len(Civs[x].Sites)):
@@ -766,6 +766,7 @@ def ProcessCivs(World,Civs,Chars,Colors,Month):
                 
             Civs[x].Sites[y].Population += NewPop
 
+            #Expand
             if Civs[x].Sites[y].Population > Civs[x].Sites[y].popcap:
                 Civs[x].Sites[y].Population = int(round(Civs[x].Sites[y].popcap))
                 if len(Civs[x].Sites) < CIV_MAX_SITES:
@@ -774,9 +775,28 @@ def ProcessCivs(World,Civs,Chars,Colors,Month):
 
             Civs[x].TotalPopulation += Civs[x].Sites[y].Population
 
+            #Diplomacy
+            for a in range(CIVILIZED_CIVS+TRIBAL_CIVS):
+                for b in range(len(Civs[a].Sites)):
+                    if x == a:
+                        break
+                    if PointDistRound(Civs[x].Sites[y].x,Civs[x].Sites[y].y,Civs[a].Sites[b].x,Civs[a].Sites[b].y) < WAR_DISTANCE:
+                        AlreadyWar = False
+                        for c in range(len(Wars)):
+                            if (Wars[c].Side1 == Civs[x] and Wars[c].Side2 == Civs[a]) or (Wars[c].Side1 == Civs[a] and Wars[c].Side2 == Civs[x]):
+                                #Already at War
+                                AlreadyWar = True
+                        if AlreadyWar == False:
+                            #Start War
+                            Wars.append(War(Civs[x],Civs[a]))
+                        
             print "X:",Civs[x].Sites[y].x,"Y:",Civs[x].Sites[y].y,"Population:",Civs[x].Sites[y].Population
 
         print '\n'
+
+    #Wars Process
+    for x in range(len(Wars)):
+        print "a"
 
     return
 
@@ -954,8 +974,7 @@ libtcod.console_set_custom_font("Andux_cp866ish.png", libtcod.FONT_LAYOUT_ASCII_
 libtcod.console_init_root(SCREEN_WIDTH, SCREEN_HEIGHT, 'pyWorld', False, libtcod.RENDERER_SDL) #Set True for Fullscreen
 
 #Palette
-Palette = [libtcod.Color(20, 150, 30), #Green
-           libtcod.Color(255, 45, 33), #Red
+Palette = [libtcod.Color(255, 45, 33), #Red
            libtcod.Color(254, 80, 0),  #Orange
            libtcod.Color(0, 35, 156),  #Blue
            libtcod.Color(71, 45, 96),  #Purple
@@ -996,6 +1015,10 @@ BiomeMap(Chars,Colors)
 
 #Month 0
 Month=0
+
+#Reset Wars
+Wars = []
+del Wars[:]
 
 #Select Map Mode
 while not libtcod.console_is_window_closed():
@@ -1054,6 +1077,8 @@ while not libtcod.console_is_window_closed():
             print "\n" * 100
             print " * NEW WORLD *"
             Month=0
+            Wars = []
+            del Wars[:]
             World = MasterWorldGen()
             Races = ReadRaces()
             Govern = ReadGovern()
