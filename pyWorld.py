@@ -954,8 +954,6 @@ def NormalMap(World):  # -------------------------------------------------------
             15: lightgreen,
             16: darkgreen
         }[x]
-
-    World[0][0].hasRiver = False #Fixes unknown bug
       
     for x in xrange(WORLD_WIDTH):
         for y in xrange(WORLD_HEIGHT):
