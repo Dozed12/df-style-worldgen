@@ -63,6 +63,14 @@ class CivSite:
 
     isCapital = False
 
+class Army:
+
+    def __init__(self,x,y,Civ,Size):
+        self.x = x
+        self.y = y
+        self.Civ = Civ
+        self.Size = Size
+
 class Civ:
 
     def __init__(self,Race,Name,Government,Color,Flag,Aggression):
@@ -83,24 +91,19 @@ class Civ:
     Sites = []
     SuitableSites = []
 
+    atWar = False
+
+    Army = Army(None,None,None,None)
     TotalPopulation = 0
 
 class GovernmentType:
 
-    def __init__(self,Name,Description,Aggressiveness,Militarizantion,TechBonus):
+    def __init__(self,Name,Description,Aggressiveness,Militarization,TechBonus):
         self.Name = Name
         self.Description = Description
         self.Aggressiveness = Aggressiveness
-        self.Militarizantion = Militarizantion
+        self.Militarization = Militarization
         self.TechBonus = TechBonus
-
-class Army:
-
-    def __init__(self,x,y,Civ,Size):
-        self.x = x
-        self.y = y
-        self.Civ = Civ
-        self.Size = Size
 
 class War:
 
@@ -787,16 +790,24 @@ def ProcessCivs(World,Civs,Chars,Colors,Month):
                                 #Already at War
                                 AlreadyWar = True
                         if AlreadyWar == False:
-                            #Start War
+                            #Start War and form armies if dot have army yet
                             Wars.append(War(Civs[x],Civs[a]))
-                        
+                            if Civs[a].atWar == False: #if not already at war form new army
+                                Civs[a].Army = Army(Civs[a].Sites[0].x,
+                                                    Civs[a].Sites[0].y,
+                                                    Civs[a],
+                                                    Civs[a].TotalPopulation * Civs[a].Government.Militarization / 100)
+                                Civs[a].atWar = True
+                            if Civs[x].atWar == False: #if not already at war form new army
+                                Civs[x].Army = Army(Civs[x].Sites[0].x,
+                                                    Civs[x].Sites[0].y,
+                                                    Civs[x],
+                                                    Civs[x].TotalPopulation * Civs[x].Government.Militarization / 100)
+                                Civs[x].atWar = True
+                                
             print "X:",Civs[x].Sites[y].x,"Y:",Civs[x].Sites[y].y,"Population:",Civs[x].Sites[y].Population
 
-        print '\n'
-
-    #Wars Process
-    for x in range(len(Wars)):
-        print "a"
+        print Civs[x].Army.x,Civs[x].Army.y,Civs[x].Army.Size,'\n'
 
     return
 
