@@ -745,6 +745,9 @@ def NewSite(Civ, Origin, World,Chars,Colors):
     Chars[X][Y] = 31
     Colors[X][Y] = Civ.Color
 
+    global needUpdate
+    needUpdate = True
+
     return Civ
 
 def ProcessCivs(World,Civs,Chars,Colors,Month):
@@ -998,6 +1001,7 @@ Palette = [libtcod.Color(255, 45, 33), #Red
 ################################################################################# - Main Cycle / Input - ##################################################################################
 
 isRunning = False
+needUpdate = False
 
 #World Gen
 World = [[0 for y in range(WORLD_HEIGHT)] for x in range(WORLD_WIDTH)]
@@ -1050,7 +1054,9 @@ while not libtcod.console_is_window_closed():
             time.sleep(1)
 
         #Flush Console
-        BiomeMap(Chars,Colors)
+        if needUpdate:
+            BiomeMap(Chars,Colors)
+            needUpdate = False
       
     key = libtcod.console_wait_for_keypress(True)
 
