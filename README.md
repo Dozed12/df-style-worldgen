@@ -18,12 +18,6 @@ Windows:
 - Open pyWorld/dist
 - Run pyWorld.exe (not pyWorld.py)
 
-Note: These Distributions will be built every saturday, if you have python 2.7.11 installed you can run pyWorld\pyWorld.py (Not tested)
-
-Linux (WIP):
-
-Note: Linux version is currently broken in both 32/64 bit getting stuck after ReadGovernemnts probably missing library.
-
 # Instructions
 
 After opening pyWorld it generates a map for you and displays Biome Map Mode
