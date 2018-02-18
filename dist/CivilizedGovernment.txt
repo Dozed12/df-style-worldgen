@@ -1,0 +1,40 @@
+[TYPE]Absolute Monarchy
+	[DESCRIPTION]A form of government where the monarch has absolute power over the people. The monarch has the power to make peace or war without any counseling and is viewed as the living form of the Civilization standing above everyone and everything else.
+	[AGGRESSIVENESS]2
+	[MILITARIZATION]30
+	[TECH]0
+[TYPE]Constitutional monarchy
+	[DESCRIPTION]A form of government where the monarch has restricted power managed by a council or parlament. The monarch requires council or parliamentary approval to make peace or war based on a constitution.
+	[AGGRESSIVENESS]2
+	[MILITARIZATION]30
+	[TECH]10
+[TYPE]Democracy
+	[DESCRIPTION]A form of government where power resides in elected individuals to represent the interests of the people.
+	[AGGRESSIVENESS]2
+	[MILITARIZATION]20
+	[TECH]20
+[TYPE]Plutocracy
+	[DESCRIPTION]A form of government where power resides in a wealthy minority.
+	[AGGRESSIVENESS]2
+	[MILITARIZATION]30
+	[TECH]-10
+[TYPE]Technocracy
+	[DESCRIPTION]A form of government where power resides in individuals said to have an intellectual and technological knowledge advantage over the rest.
+	[AGGRESSIVENESS]2
+	[MILITARIZATION]20
+	[TECH]30
+[TYPE]Fanatic Theocracy
+	[DESCRIPTION]A form of government where power resides in the religious elite seeking to expand their religion to other Civilizations.
+	[AGGRESSIVENESS]2
+	[MILITARIZATION]30
+	[TECH]-20
+[TYPE]Theocracy
+	[DESCRIPTION]A form of government where power resides in the religious elite looking for higher enlightenment and guidance.
+	[AGGRESSIVENESS]2
+	[MILITARIZATION]20
+	[TECH]0
+[TYPE]Military Dictatorship
+	[DESCRIPTION]A form of government where power resides in a single individual and enforced is by the military.
+	[AGGRESSIVENESS]2
+	[MILITARIZATION]40
+	[TECH]0

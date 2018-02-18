@@ -1,0 +1,15 @@
+0 - deep ocean
+1 - swamp
+2 - marsh
+3 - grassland
+4 - desert
+5 - conifer forest
+6 - broadleaf forest
+8 - badlands
+9 - mountain
+10 - peek
+11/12/13 - ice
+14 - small hills
+15 - shrubland
+16 - hill
+
