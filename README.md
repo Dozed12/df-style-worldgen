@@ -4,11 +4,7 @@
 
 # What is it?
 
-df-style-worldgen is a 2D world generator inspired by Dwarf Fortress. It generates 2D worlds with multiple map modes and will eventually simulate civilizations, gods and beasts and their history.
-
-# What's different from Dwarf Fortress?
-
-Dwarf Fortress is both a simulation and a game meaning that DF main goal is to generate a world and it's history but at some point allow the player to enter the world either as a Adventurer or leading a group of dwarfs without a predertermined goal except to have !!fun!!. However Dwarf Fortress generates the history of the world with incredible amount of detail in which every single entity(except creatures) has a name, a family, dreams, physical and psychological description and history record, meaning that history generation starts to slow down by the year 250. This project aims to mimic and if possible improve DF's world and history generator to have it run for longer and possibly create thousands of years of history by focusing on Adventurers, Beasts, Gods, etc and leaving the general population as a number.
+df-style-worldgen is a 2D fantasy world generator inspired by Dwarf Fortress. It generates 2D worlds with multiple map modes and eventually simulate civilizations, gods and beasts and their history.
 
 # Installation
 
@@ -20,7 +16,7 @@ Windows:
 
 # Instructions
 
-After opening pyWorld it generates a map for you and displays Biome Map Mode
+After opening pyWorld it generates a new map for you and displays the Biome Map Mode
 
 Keys:
 
@@ -43,9 +39,6 @@ Currently only Civ expansion is generated. It's visible in the map by ▼ chars.
 
 df-style-worldgen is written in python and uses the libtcod API. df-style-worldgen uses Andux's modified version of the CP866 tileset.
 
-# To do list
+## Note
 
-- Volcanism 
-- Civilizations Expansion/Diplomacy
-- Random Beasts/Gods/Adventurers
-- Civ Independent Sites (ie: Beast Lair)
+This project was developed during the summer holidays of my first year of college. It began as just a prototype and a learning experience to learn more about python and more importantly about procedural generation. I kept working on it and adding new things as I found more and more interesting things to do with procedural generation. Unfortunately, due to my lack of knowledge and good code practices, typical in someone that's starting to learn programming, the code grew to become poorly organized and poorly planned making working on it harder and harder. Eventually I felt that working on it made me waste more time trying to refactor it and make things work than actually learning more about procedural generation. This led me to publish it and move on to other projects. I still consider this one of my favorite projects that I worked on as it was the one where I first learned and used procedural generation.
